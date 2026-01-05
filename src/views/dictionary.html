@@ -1,0 +1,41 @@
+<section class="view dictionary-shell" data-view="dictionary">
+    <header class="page-header">
+        <h1 class="page-title">词典</h1>
+    </header>
+    <div class="dict-layout">
+        <!-- Intro Panel -->
+        <div class="panel dict-intro-panel">
+            <div class="dict-intro-head">
+                <div class="dict-icon" aria-hidden="true">Aa</div>
+                <div class="dict-intro-text">
+                    <h2 class="panel-title">你的词典</h2>
+                    <p class="dict-sub">为语音转录添加自定义词汇，提高识别准确度。</p>
+                </div>
+            </div>
+            <form class="dict-form" id="dict-form" autocomplete="off">
+                <div class="dict-input-row">
+                    <input id="dict-original" class="dict-input" type="text" placeholder="输入原始词或短语" aria-label="原始词"
+                        required />
+                    <span class="dict-arrow hidden" id="dict-arrow">→</span>
+                    <input id="dict-replacement" class="dict-input dict-replacement hidden" type="text"
+                        placeholder="替换成..." aria-label="替换词" />
+                    <button type="submit" class="btn primary dict-add-btn" id="dict-add-btn" disabled>+ 添加</button>
+                </div>
+                <div class="dict-replace-row">
+                    <button type="button" class="switch" id="dict-toggle-replace"
+                        aria-label="启用替换"><span></span></button>
+                    <label for="dict-replacement" class="dict-replace-label">添加替换</label>
+                    <span class="hint-icon" title="开启后将把原始词替换为该内容">&#128712;</span>
+                </div>
+                <div class="dict-alert hidden" id="dict-alert" role="alert"></div>
+            </form>
+        </div>
+
+        <!-- List Panel -->
+        <div class="panel dict-list-panel">
+            <h2 class="panel-title">词条</h2>
+            <div id="dict-empty" class="dict-empty" aria-live="polite">词典为空，添加词条来定制你的语音体验。</div>
+            <ul class="dict-list" id="dict-list" aria-live="polite"></ul>
+        </div>
+    </div>
+</section>

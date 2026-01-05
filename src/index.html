@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monologue Web</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script type="module" src="/main.js" defer></script>
+</head>
+
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="主导航">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">
+          <img src="assets/logo/mb_blue_128x128.ico" alt="MonoBuck Logo">
+
+        </div>
+
+        <div class="brand-name">MonoBuck 莫巴克</div>
+      </div>
+      <nav class="nav" aria-label="主功能">
+        <ul>
+          <li><button class="nav-item active" data-target="dashboard" aria-current="page">首页</button></li>
+          <li><button class="nav-item" data-target="transcripts">转录</button></li>
+          <li><button class="nav-item" data-target="instructions">指令</button></li>
+          <li><button class="nav-item" data-target="dictionary">词典</button></li>
+        </ul>
+      </nav>
+      <!-- <div class="quota" aria-live="polite">
+        <div class="quota-label">剩余</div>
+        <div class="quota-bar"><span style="width:75%"></span></div>
+        <div class="quota-text"><strong>953</strong> words left</div>
+        <div class="divider" aria-hidden="true"></div>
+
+      </div> -->
+      <div class="secondary-nav" aria-label="系统与帮助">
+        <button class="nav-item" data-target="settings">设置</button>
+        <!-- <button class="nav-item" data-target="account">账户</button> -->
+        <!-- <button class="nav-item" data-target="help">帮助</button> -->
+      </div>
+    </aside>
+    <main class="content" tabindex="-1">
+      <div id="view-container" aria-live="polite"></div>
+      <!-- Live Recognition Status Panel -->
+      <div id="live-recognition" class="live-rec-panel" aria-live="polite">
+        <div class="live-rec-header">
+          <span class="live-rec-icon">🎤</span>
+          <span class="live-rec-title">语音识别</span>
+          <span class="live-rec-status" data-state="idle">Idle</span>
+        </div>
+        <div class="live-rec-body">
+          <div class="live-rec-line raw" title="原始识别">原始: <span class="text"></span></div>
+          <div class="live-rec-line processed" title="精炼结果">结果: <span class="text"></span></div>
+          <div class="live-rec-meta">时长: <span class="dur">0</span> ms</div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <!-- Global modal (confirm) -->
+  <div class="modal-overlay hidden" id="global-modal" role="dialog" aria-modal="true"
+    aria-labelledby="global-modal-title">
+    <div class="modal" role="document" tabindex="-1">
+      <!-- 暂时关闭提示图标，简洁些 -->
+      <!-- <div class="modal-icon" id="global-modal-icon" aria-hidden="true"></div> -->
+      <h3 class="modal-title" id="global-modal-title"></h3>
+      <p class="modal-text" id="global-modal-text"></p>
+      <div class="modal-actions">
+        <button class="btn danger" id="global-modal-confirm"></button>
+        <button class="btn ghost" id="global-modal-cancel"></button>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

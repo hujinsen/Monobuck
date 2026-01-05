@@ -1,0 +1,79 @@
+<div class="page-header">
+    <h1 class="page-title">指令</h1>
+</div>
+<div class="instructions-shell" id="instructions-root">
+    <div class="panel instructions-editor-panel">
+        <div class="editor-head">
+            <h2 class="panel-title">自定义提示词</h2>
+            <p class="hint-text">添加自定义提示词，比如“用语准确”，“使用中文回答”等。</p>
+        </div>
+        <textarea class="instructions-editor" id="instructions-text" placeholder="Type your general guidance here..."
+            rows="6" aria-label="Custom instructions"></textarea>
+    </div>
+    <div class="panel modes-panel">
+        <div class="modes-head">
+            <h2 class="panel-title">模式</h2>
+            <button class="btn ghost" id="create-mode-btn">+ 新模式</button>
+        </div>
+        <div class="instructions-grid" id="modes-grid">
+            <!-- Mode cards will be injected by JS if dynamic; static initial set: -->
+            <div class="mode-card" data-id="messaging">
+                <div class="mode-top">
+                    <div class="mode-title">聊天</div>
+                    <button class="icon-btn mode-edit" title="Edit">✎ 编辑</button>
+                </div>
+                <div class="mode-body hidden" data-role="edit-body">
+                    <textarea class="mode-text" placeholder="Messaging specific guidance..."></textarea>
+                    <div class="mode-actions"><button class="btn primary mode-save">保存</button><button
+                            class="btn ghost mode-cancel">取消</button><button class="btn danger mode-delete">删除</button>
+                    </div>
+                </div>
+                <div class="mode-footer">
+                    <button class="switch" aria-label="Toggle mode" data-role="toggle"><span></span></button>
+                </div>
+            </div>
+            <div class="mode-card" data-id="coding">
+                <div class="mode-top">
+                    <div class="mode-title">编码</div>
+                    <button class="icon-btn mode-edit" title="Edit">✎ 编辑</button>
+                </div>
+                <div class="mode-body hidden" data-role="edit-body">
+                    <textarea class="mode-text" placeholder="Coding specific guidance..."></textarea>
+                    <div class="mode-actions"><button class="btn primary mode-save">保存</button><button
+                            class="btn ghost mode-cancel">取消</button><button class="btn danger mode-delete">删除</button>
+                    </div>
+                </div>
+                <div class="mode-footer"><button class="switch" aria-label="Toggle mode"
+                        data-role="toggle"><span></span></button></div>
+            </div>
+            <div class="mode-card" data-id="email">
+                <div class="mode-top">
+                    <div class="mode-title">Email</div>
+                    <button class="icon-btn mode-edit" title="Edit">✎ 编辑</button>
+                </div>
+                <div class="mode-body hidden" data-role="edit-body">
+                    <textarea class="mode-text" placeholder="Email specific guidance..."></textarea>
+                    <div class="mode-actions"><button class="btn primary mode-save">保存</button><button
+                            class="btn ghost mode-cancel">取消</button><button class="btn danger mode-delete">删除</button>
+                    </div>
+                </div>
+                <div class="mode-footer"><button class="switch" aria-label="Toggle mode"
+                        data-role="toggle"><span></span></button></div>
+            </div>
+            <div class="mode-card" data-id="notes">
+                <div class="mode-top">
+                    <div class="mode-title">记录</div>
+                    <button class="icon-btn mode-edit" title="Edit">✎ 编辑</button>
+                </div>
+                <div class="mode-body hidden" data-role="edit-body">
+                    <textarea class="mode-text" placeholder="Notes specific guidance..."></textarea>
+                    <div class="mode-actions"><button class="btn primary mode-save">保存</button><button
+                            class="btn ghost mode-cancel">取消</button><button class="btn danger mode-delete">删除</button>
+                    </div>
+                </div>
+                <div class="mode-footer"><button class="switch" aria-label="Toggle mode"
+                        data-role="toggle"><span></span></button></div>
+            </div>
+        </div>
+    </div>
+</div>

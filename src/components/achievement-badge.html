@@ -1,0 +1,77 @@
+<!-- Achievement Badge Component -->
+<!-- 用于成就解锁弹窗或个人档案展示 -->
+
+<div class="achievement-modal-overlay" id="achievement-overlay">
+  <div class="achievement-modal">
+    <div class="achievement-content">
+      <div class="achievement-icon">🎉</div>
+      <h2 class="achievement-title">恭喜解锁新成就！</h2>
+      
+      <!-- 微信读书风格的金色徽章 -->
+      <div class="streak-badge achievement" id="achievement-badge">
+        <div class="streak-core">
+          <span class="streak-count">1000</span>
+        </div>
+        <div class="streak-label">千字达人</div>
+      </div>
+      
+      <p class="achievement-desc">累计转录文字达到1000字，你的坚持值得赞赏！</p>
+      
+      <div class="achievement-stats">
+        <div class="stat-item">
+          <span class="stat-label">获得时间</span>
+          <span class="stat-value">2024年10月27日</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">全球排名</span>
+          <span class="stat-value">前15%</span>
+        </div>
+      </div>
+      
+      <div class="achievement-actions">
+        <button class="btn primary">分享成就</button>
+        <button class="btn ghost" onclick="closeAchievementModal()">继续使用</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 个人档案中的徽章展示网格 -->
+<div class="badges-collection">
+  <h3 class="collection-title">我的成就徽章</h3>
+  <div class="badges-grid">
+    
+    <!-- 已获得的徽章 -->
+    <div class="badge-item earned" data-badge="first-100">
+      <div class="streak-badge achievement mini">
+        <div class="streak-core">
+          <span class="streak-count">100</span>
+        </div>
+        <div class="streak-label">初出茅庐</div>
+      </div>
+      <div class="badge-date">2024.10.25</div>
+    </div>
+    
+    <!-- 未获得的徽章（灰色状态） -->
+    <div class="badge-item locked" data-badge="first-1000">
+      <div class="streak-badge achievement mini locked">
+        <div class="streak-core">
+          <span class="streak-count">1K</span>
+        </div>
+        <div class="streak-label">千字达人</div>
+      </div>
+      <div class="badge-progress">进度: 456/1000</div>
+    </div>
+    
+    <div class="badge-item locked" data-badge="streak-7">
+      <div class="streak-badge achievement mini locked">
+        <div class="streak-core">
+          <span class="streak-count">7</span>
+        </div>
+        <div class="streak-label">一周坚持</div>
+      </div>
+      <div class="badge-progress">进度: 3/7天</div>
+    </div>
+    
+  </div>
+</div>

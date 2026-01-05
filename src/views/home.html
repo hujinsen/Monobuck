@@ -1,0 +1,71 @@
+<section class="view" data-view="dashboard">
+    <header class="page-header">
+        <h1>首页</h1>
+        <div class="header-actions">
+            <button class="btn primary">新建转录</button>
+            <button class="btn ghost">导出数据</button>
+        </div>
+    </header>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">全部文字</div>
+            <div class="stat-value" id="stat-total-words">47</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">节省时间</div>
+            <div class="stat-value" id="stat-time-saved">22秒</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">WPM</div>
+            <div class="stat-value" id="stat-wpm">70.5</div>
+        </div>
+    </div>
+    <div class="banner">今天转录了88个字！继续加油！</div>
+    <div class="dashboard-grid">
+        <!-- 1: 主要使用 -->
+        <div class="panel">
+            <h2 class="panel-title">主要使用</h2>
+            <ul class="sources" id="top-sources">
+                <li class="source-item"><span class="source-icon">📝</span> Monologue <span class="badge">40 words</span></li>
+                <li class="source-item"><span class="source-icon">🌐</span> Edge <span class="badge">7 words</span></li>
+            </ul>
+        </div>
+        <!-- 2: 成就/连击徽章（右上） -->
+        <div class="panel streak-panel">
+            <div class="streak-badge tier-0" id="streak-badge" role="status" aria-live="polite">
+                <div class="streak-core"><span class="streak-count">0</span></div>
+                <div class="streak-label">Seed</div>
+                <div class="streak-next">再 1 天升级</div>
+            </div>
+        </div>
+        <!-- 3: 最近转录（左下） -->
+        <div class="panel">
+            <h2 class="panel-title">最近转录</h2>
+            <ul class="transcript-list" id="recent-transcripts" aria-live="polite">
+                <li class="transcript-item">
+                    <div class="time">16:34</div>
+                    <div class="text">今天找到了这个地方，很好的吃饭地方，推荐给你。这个地方的菜品很不错，价格也不贵，而且服务态度也很好，很值得推荐。</div>
+                </li>
+                <li class="transcript-item">
+                    <div class="time">16:34</div>
+                    <div class="text">MonoBuck 莫巴克</div>
+                </li>
+            </ul>
+        </div>
+        <!-- 4: 活动热图（右下） -->
+        <div class="panel">
+            <h2 class="panel-title">活动热图</h2>
+            <div class="calendar" aria-label="Monthly activity heatmap">
+                <div class="calendar-grid" id="calendar-grid"></div>
+                <div class="legend">
+                    <span>低</span>
+                    <span class="lvl l1"></span>
+                    <span class="lvl l2"></span>
+                    <span class="lvl l3"></span>
+                    <span class="lvl l4"></span>
+                    <span>高</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

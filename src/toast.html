@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>Monobuck 语音提示</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      color-scheme: dark light;
+      --toast-bg: rgba(20, 20, 20, 0.9);
+      --toast-border: rgba(255, 255, 255, 0.1);
+      --toast-text: #f5f5f5;
+      --toast-accent: #4b8dff;
+      --toast-muted: #a0a0a0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: transparent;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    .toast-root {
+      position: absolute;
+      right: 16px;
+      top: 60%;
+      width: 360px;
+      max-width: 100vw;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: var(--toast-bg);
+      border: 1px solid var(--toast-border);
+      color: var(--toast-text);
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(12px);
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      opacity: 0;
+      /* 初始在视图右侧以外，配合 visible 类做滑入动画 */
+      transform: translateX(120%) translateY(-50%);
+      pointer-events: none;
+      transition: opacity 180ms ease-out, transform 200ms ease-out;
+    }
+
+    .toast-root.visible {
+      opacity: 1;
+      transform: translateX(0) translateY(-50%);
+      pointer-events: auto;
+    }
+
+    .indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      margin-top: 4px;
+      flex-shrink: 0;
+      background: var(--toast-muted);
+    }
+
+    .indicator.recording {
+      background: #ff5b5b;
+      box-shadow: 0 0 8px rgba(255, 91, 91, 0.9);
+    }
+
+    .indicator.processing {
+      background: var(--toast-accent);
+      box-shadow: 0 0 8px rgba(75, 141, 255, 0.8);
+    }
+
+    .content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+      font-size: 13px;
+      font-weight: 550;
+      letter-spacing: 0.02em;
+    }
+
+    .title-row span.label {
+      color: var(--toast-text);
+    }
+
+    .title-row span.mode {
+      font-size: 12px;
+      color: var(--toast-muted);
+    }
+
+    .status {
+      font-size: 12px;
+      color: var(--toast-muted);
+      margin-bottom: 6px;
+    }
+
+    .text-preview {
+      font-size: 13px;
+      line-height: 1.4;
+      max-height: 3.4em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      color: var(--toast-text);
+    }
+
+    .text-preview.empty {
+      opacity: 0.7;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="toast-root" id="toast-root">
+    <div class="indicator" id="toast-indicator"></div>
+    <div class="content">
+      <div class="title-row">
+        <span class="label">语音录入</span>
+        <span class="mode" id="toast-mode"></span>
+      </div>
+      <div class="status" id="toast-status">等待开始…（双击 Ctrl 启动）</div>
+      <div class="text-preview empty" id="toast-text">暂无文本</div>
+    </div>
+  </div>
+  <script type="module" src="./toast.js"></script>
+</body>
+</html>

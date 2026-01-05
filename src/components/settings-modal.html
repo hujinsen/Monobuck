@@ -1,0 +1,32 @@
+<div class="settings-overlay hidden" id="settings-overlay" role="dialog" aria-modal="true" aria-label="设置">
+    <div class="settings-modal" role="document">
+        <button class="settings-close icon-btn" id="settings-close" aria-label="关闭设置">✖</button>
+        <div class="settings-layout">
+            <aside class="settings-sidebar" aria-label="设置类别">
+                <nav class="settings-nav" id="settings-nav">
+                    <div class="settings-group">
+                        <div class="settings-group-label">设置</div>
+                        <button class="settings-nav-item active" data-panel="general">通用</button>
+                        <button class="settings-nav-item" data-panel="system">系统</button>
+                        <button class="settings-nav-item" data-panel="customization">自定义</button>
+                    </div>
+                    <div class="settings-group">
+                        <div class="settings-group-label">账户</div>
+                        <button class="settings-nav-item" data-panel="account">账户</button>
+                        <button class="settings-nav-item" data-panel="plan">计划与账单</button>
+                        <button class="settings-nav-item" data-panel="privacy">隐私</button>
+                        <button class="settings-nav-item" data-panel="referral">邀请好友</button>
+                    </div>
+                    <div class="settings-group">
+                        <div class="settings-group-label">支持</div>
+                        <button class="settings-nav-item" data-panel="help">帮助</button>
+                        <button class="settings-nav-item danger-text" data-panel="signout">退出</button>
+                    </div>
+                </nav>
+            </aside>
+            <div class="settings-content" id="settings-content">
+                <div class="settings-scroll" id="settings-scroll-root"></div>
+            </div>
+        </div>
+    </div>
+</div>

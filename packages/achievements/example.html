@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>勋章系统集成示例</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .demo-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .demo-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .demo-btn {
+            padding: 10px 20px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        .demo-btn:hover {
+            background: #3730a3;
+        }
+        
+        .demo-btn.secondary {
+            background: #6b7280;
+        }
+        
+        .demo-btn.success {
+            background: #10b981;
+        }
+        
+        .stats-display {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4f46e5;
+        }
+        
+        .stat-label {
+            color: #6b7280;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+        
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏆 勋章系统集成示例</h1>
+            <p>演示如何在项目中集成和使用勋章系统</p>
+        </div>
+        
+        <!-- 控制面板 -->
+        <div class="demo-section">
+            <h2>🎮 操作控制</h2>
+            <div class="demo-controls">
+                <button class="demo-btn" onclick="simulateUsage(100, 5, true)">初入江湖</button>
+                <button class="demo-btn" onclick="simulateUsage(500, 15, false)">日常修行</button>
+                <button class="demo-btn" onclick="simulateUsage(1000, 30, true)">强力冲刺</button>
+                <button class="demo-btn" onclick="simulateNightUsage()">夜半钟声</button>
+                <button class="demo-btn" onclick="simulateStreak()">连续7天</button>
+                <button class="demo-btn secondary" onclick="exportData()">导出数据</button>
+                <button class="demo-btn secondary" onclick="importData()">导入数据</button>
+                <button class="demo-btn success" onclick="shareRandomBadge()">分享勋章</button>
+            </div>
+            
+            <!-- 统计显示 -->
+            <div class="stats-display">
+                <h3>📊 当前统计</h3>
+                <div class="stats-grid" id="statsDisplay">
+                    <!-- 统计数据将在这里显示 -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="layout">
+            <!-- 勋章网格 -->
+            <div class="demo-section">
+                <h2>🏆 勋章展示</h2>
+                <div id="badgeGrid">
+                    <!-- 勋章网格将在这里显示 -->
+                </div>
+            </div>
+            
+            <!-- 统计面板 -->
+            <div class="demo-section">
+                <h2>📈 详细统计</h2>
+                <div id="statsPanel">
+                    <!-- 统计面板将在这里显示 -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 通知 -->
+    <div id="notification" style="
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #10b981;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        transform: translateX(400px);
+        transition: transform 0.3s ease;
+        z-index: 1000;
+        max-width: 300px;
+        display: none;
+    ">
+        <div id="notificationContent"></div>
+    </div>
+    
+    <!-- 隐藏的文件输入 -->
+    <input type="file" id="fileInput" accept=".json" style="display: none;">
+
+    <script type="module">
+        import { 
+            EnhancedAchievementEngine, 
+            EnhancedLocalStorageStore,
+            CREATIVE_DEFINITIONS,
+            BADGE_STORIES
+        } from './enhanced-engine.js';
+        
+        import { 
+            AchievementGrid, 
+            AchievementStatsPanel 
+        } from './ui-components.js';
+        
+        // 全局变量
+        let engine;
+        let grid;
+        let statsPanel;
+        
+        // 初始化
+        async function init() {
+            // 创建引擎
+            engine = new EnhancedAchievementEngine({
+                definitions: CREATIVE_DEFINITIONS,
+                store: new EnhancedLocalStorageStore('demo'),
+                stories: BADGE_STORIES,
+                enableAnalytics: true
+            });
+            
+            // 创建UI组件
+            grid = new AchievementGrid('#badgeGrid', {
+                showFilters: true,
+                showSearch: true,
+                badgeOptions: {
+                    stories: BADGE_STORIES
+                },
+                onShare: handleShare,
+                onClick: handleBadgeClick
+            });
+            
+            statsPanel = new AchievementStatsPanel('#statsPanel', {
+                showRarityDistribution: true,
+                showThemeProgress: true,
+                showMiniWall: false
+            });
+            
+            // 设置数据
+            grid.setDefinitions(CREATIVE_DEFINITIONS);
+            
+            // 加载初始数据
+            await updateDisplay();
+            
+            console.log('🎉 勋章系统初始化完成');
+        }
+        
+        // 更新显示
+        async function updateDisplay() {
+            const unlockedBadges = await engine.store.getUnlocked();
+            const stats = await engine.store.getUserStats();
+            const detailedStats = await engine.getDetailedStats();
+            
+            // 更新网格
+            grid.setUnlockedBadges(unlockedBadges);
+            
+            // 更新统计面板
+            statsPanel.setStats(detailedStats);
+            
+            // 更新基础统计显示
+            updateStatsDisplay(stats, unlockedBadges.length);
+        }
+        
+        // 更新统计显示
+        function updateStatsDisplay(stats, unlockedCount) {
+            const display = document.getElementById('statsDisplay');
+            display.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${unlockedCount}</div>
+                    <div class="stat-label">已解锁勋章</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.totalUsage || 0}</div>
+                    <div class="stat-label">使用次数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.totalWords || 0}</div>
+                    <div class="stat-label">总字数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.currentStreak || 0}</div>
+                    <div class="stat-label">连续天数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.totalDuration || 0}</div>
+                    <div class="stat-label">总时长(分钟)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${Math.round((unlockedCount / CREATIVE_DEFINITIONS.length) * 100)}%</div>
+                    <div class="stat-label">完成度</div>
+                </div>
+            `;
+        }
+        
+        // 模拟使用
+        async function simulateUsage(words, duration, perfect) {
+            try {
+                const result = await engine.onTranscriptionComplete(words, duration, { perfect });
+                
+                if (result.unlocked.length > 0) {
+                    // 显示通知
+                    showNotification(`🎉 解锁了 ${result.unlocked.length} 个新勋章！`);
+                    
+                    // 添加到网格（带动画）
+                    result.unlocked.forEach(badge => {
+                        grid.addUnlockedBadge(badge);
+                    });
+                } else {
+                    showNotification('📈 统计已更新');
+                }
+                
+                await updateDisplay();
+                
+            } catch (error) {
+                console.error('模拟使用失败:', error);
+                showNotification('❌ 操作失败', 'error');
+            }
+        }
+        
+        // 模拟夜间使用
+        async function simulateNightUsage() {
+            const originalDate = window.Date;
+            
+            // 模拟凌晨2点
+            const mockDate = new Date();
+            mockDate.setHours(2, 0, 0, 0);
+            
+            window.Date = function(...args) {
+                if (args.length === 0) return mockDate;
+                return new originalDate(...args);
+            };
+            window.Date.prototype = originalDate.prototype;
+            
+            await simulateUsage(200, 8, false);
+            
+            // 恢复Date
+            window.Date = originalDate;
+        }
+        
+        // 模拟连续使用
+        async function simulateStreak() {
+            showNotification('🔄 正在模拟7天连续使用...');
+            
+            for (let i = 0; i < 7; i++) {
+                const mockDate = new Date();
+                mockDate.setDate(mockDate.getDate() + i);
+                
+                const originalDate = window.Date;
+                window.Date = function(...args) {
+                    if (args.length === 0) return mockDate;
+                    return new originalDate(...args);
+                };
+                window.Date.prototype = originalDate.prototype;
+                
+                const result = await engine.onTranscriptionComplete(100 + i * 20, 5 + i, { perfect: i % 2 === 0 });
+                
+                window.Date = originalDate;
+                
+                if (result.unlocked.length > 0) {
+                    result.unlocked.forEach(badge => {
+                        grid.addUnlockedBadge(badge);
+                    });
+                }
+                
+                // 添加延迟以显示进度
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+            
+            await updateDisplay();
+            showNotification('✅ 7天连续使用模拟完成！');
+        }
+        
+        // 导出数据
+        async function exportData() {
+            try {
+                const exportResult = await engine.exportData('json');
+                
+                const blob = new Blob([exportResult.content], { type: exportResult.mimeType });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = exportResult.filename;
+                link.click();
+                URL.revokeObjectURL(url);
+                
+                showNotification('📄 数据导出成功！');
+            } catch (error) {
+                console.error('导出失败:', error);
+                showNotification('❌ 导出失败', 'error');
+            }
+        }
+        
+        // 导入数据
+        function importData() {
+            const fileInput = document.getElementById('fileInput');
+            fileInput.onchange = async (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                try {
+                    const text = await file.text();
+                    const data = JSON.parse(text);
+                    
+                    const result = await engine.importData(data);
+                    
+                    if (result.success) {
+                        await updateDisplay();
+                        showNotification(`✅ 导入成功！恢复了 ${result.imported.badges} 个勋章`);
+                    } else {
+                        showNotification(`❌ 导入失败: ${result.error}`, 'error');
+                    }
+                } catch (error) {
+                    console.error('导入失败:', error);
+                    showNotification('❌ 文件格式错误', 'error');
+                }
+                
+                // 清空文件输入
+                fileInput.value = '';
+            };
+            
+            fileInput.click();
+        }
+        
+        // 分享随机勋章
+        async function shareRandomBadge() {
+            const unlockedBadges = await engine.store.getUnlocked();
+            
+            if (unlockedBadges.length === 0) {
+                showNotification('❌ 还没有解锁任何勋章');
+                return;
+            }
+            
+            const randomBadge = unlockedBadges[Math.floor(Math.random() * unlockedBadges.length)];
+            const shareData = await engine.generateShareData(randomBadge.id);
+            
+            if (shareData) {
+                // 复制到剪贴板
+                try {
+                    await navigator.clipboard.writeText(shareData.shareText);
+                    showNotification('📋 分享文本已复制到剪贴板！');
+                } catch (error) {
+                    // 如果复制失败，显示分享文本
+                    alert(shareData.shareText);
+                }
+            }
+        }
+        
+        // 处理勋章分享
+        async function handleShare(badgeId) {
+            const shareData = await engine.generateShareData(badgeId);
+            
+            if (shareData) {
+                try {
+                    await navigator.clipboard.writeText(shareData.shareText);
+                    showNotification('📋 分享文本已复制！');
+                } catch (error) {
+                    alert(shareData.shareText);
+                }
+            }
+        }
+        
+        // 处理勋章点击
+        function handleBadgeClick(badgeId) {
+            console.log('点击勋章:', badgeId);
+            showNotification(`🎯 查看勋章: ${badgeId}`);
+        }
+        
+        // 显示通知
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const content = document.getElementById('notificationContent');
+            
+            content.textContent = message;
+            notification.style.display = 'block';
+            notification.style.background = type === 'error' ? '#dc2626' : '#10b981';
+            notification.style.transform = 'translateX(0)';
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(400px)';
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                }, 300);
+            }, 3000);
+        }
+        
+        // 暴露全局函数
+        window.simulateUsage = simulateUsage;
+        window.simulateNightUsage = simulateNightUsage;
+        window.simulateStreak = simulateStreak;
+        window.exportData = exportData;
+        window.importData = importData;
+        window.shareRandomBadge = shareRandomBadge;
+        
+        // 初始化应用
+        init().catch(console.error);
+    </script>
+</body>
+</html>

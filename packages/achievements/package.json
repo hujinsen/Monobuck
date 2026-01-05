@@ -1,0 +1,42 @@
+{
+  "name": "@monobuck/achievements",
+  "version": "2.0.0",
+  "description": "功能完整的勋章系统，支持浏览器与Node环境，包含创意命名、UI组件、数据分析等扩展功能。",
+  "type": "module",
+  "main": "./enhanced-engine.js",
+  "module": "./enhanced-engine.js",
+  "exports": {
+    ".": "./enhanced-engine.js",
+    "./creative": "./creative-definitions.js",
+    "./ui": "./ui-components.js"
+  },
+  "files": [
+    "enhanced-engine.js",
+    "creative-definitions.js",
+    "ui-components.js",
+    "README.md",
+    "example.html"
+  ],
+  "keywords": [
+    "achievements", 
+    "badges", 
+    "gamification", 
+    "ui-components",
+    "progress-tracking",
+    "statistics",
+    "monobuck"
+  ],
+  "license": "MIT",
+  "author": "MonoBuck",
+  "repository": {
+    "type": "git",
+    "url": "git+https://example.com/monobuck/achievements.git"
+  },
+  "scripts": {
+    "demo": "echo \"请在浏览器中打开 example.html 查看演示\"",
+    "test": "echo \"测试功能请运行项目根目录的测试文件\""
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

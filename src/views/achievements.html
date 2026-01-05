@@ -1,0 +1,263 @@
+<!-- 成就徽章页面 - 参考微信读书完整体系 -->
+<section class="view" data-view="achievements">
+    <header class="page-header">
+        <h1>我的成就</h1>
+        <div class="header-actions">
+            <div class="achievement-stats">
+                <span class="stat-item">
+                    <span class="stat-value" id="total-badges">12</span>
+                    <span class="stat-label">已获得</span>
+                </span>
+                <span class="stat-item">
+                    <span class="stat-value" id="total-possible">45</span>
+                    <span class="stat-label">总数</span>
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 最近获得的徽章 -->
+    <div class="recent-achievements">
+        <h2 class="section-title">最近获得</h2>
+        <div class="recent-badges-scroll">
+            <div class="recent-badge-item">
+                <div class="achievement-badge BASIC uncommon" data-category="BASIC">
+                    <div class="badge-core">
+                        <span class="badge-icon">1K</span>
+                    </div>
+                </div>
+                <div class="badge-info">
+                    <div class="badge-name">千字达人</div>
+                    <div class="badge-date">2024.10.27</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 成就分类展示 -->
+    <div class="achievements-container">
+        
+        <!-- 转录成就 -->
+        <div class="achievement-category">
+            <div class="category-header">
+                <div class="category-icon">📝</div>
+                <div class="category-info">
+                    <h3 class="category-title">转录成就</h3>
+                    <p class="category-desc">基础转录里程碑</p>
+                </div>
+                <div class="category-progress">
+                    <span class="progress-text">4/7</span>
+                </div>
+            </div>
+            <div class="badges-grid">
+                <!-- 已获得 -->
+                <div class="badge-item earned">
+                    <div class="achievement-badge BASIC common" data-badge="words-50">
+                        <div class="badge-core">
+                            <span class="badge-icon">50</span>
+                        </div>
+                    </div>
+                    <div class="badge-name">初学者</div>
+                    <div class="badge-date">2024.10.25</div>
+                </div>
+                
+                <div class="badge-item earned">
+                    <div class="achievement-badge BASIC common" data-badge="words-200">
+                        <div class="badge-core">
+                            <span class="badge-icon">200</span>
+                        </div>
+                    </div>
+                    <div class="badge-name">入门者</div>
+                    <div class="badge-date">2024.10.26</div>
+                </div>
+
+                <!-- 未获得 -->
+                <div class="badge-item locked">
+                    <div class="achievement-badge BASIC common locked" data-badge="words-500">
+                        <div class="badge-core">
+                            <span class="badge-icon">500</span>
+                        </div>
+                    </div>
+                    <div class="badge-name">练习生</div>
+                    <div class="badge-progress">进度: 234/500</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 转录挑战 -->
+        <div class="achievement-category">
+            <div class="category-header">
+                <div class="category-icon">🎯</div>
+                <div class="category-info">
+                    <h3 class="category-title">转录挑战</h3>
+                    <p class="category-desc">特定目标挑战</p>
+                </div>
+                <div class="category-progress">
+                    <span class="progress-text">2/5</span>
+                </div>
+            </div>
+            <div class="badges-grid">
+                <div class="badge-item earned">
+                    <div class="achievement-badge CHALLENGE common" data-badge="daily-100">
+                        <div class="badge-core">
+                            <span class="badge-icon">100</span>
+                        </div>
+                    </div>
+                    <div class="badge-name">日行百字</div>
+                    <div class="badge-date">2024.10.27</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 转录习惯 -->
+        <div class="achievement-category">
+            <div class="category-header">
+                <div class="category-icon">📅</div>
+                <div class="category-info">
+                    <h3 class="category-title">转录习惯</h3>
+                    <p class="category-desc">良好习惯养成</p>
+                </div>
+                <div class="category-progress">
+                    <span class="progress-text">1/6</span>
+                </div>
+            </div>
+            <div class="badges-grid">
+                <div class="badge-item earned">
+                    <div class="achievement-badge HABIT common" data-badge="streak-3">
+                        <div class="badge-core">
+                            <span class="badge-icon">3</span>
+                        </div>
+                    </div>
+                    <div class="badge-name">三日新手</div>
+                    <div class="badge-date">2024.10.27</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 速度成就 -->
+        <div class="achievement-category">
+            <div class="category-header">
+                <div class="category-icon">⚡</div>
+                <div class="category-info">
+                    <h3 class="category-title">速度成就</h3>
+                    <p class="category-desc">转录速度突破</p>
+                </div>
+                <div class="category-progress">
+                    <span class="progress-text">0/5</span>
+                </div>
+            </div>
+            <div class="badges-grid">
+                <div class="badge-item locked">
+                    <div class="achievement-badge SPEED common locked" data-badge="speed-30">
+                        <div class="badge-core">
+                            <span class="badge-icon">30</span>
+                        </div>
+                    </div>
+                    <div class="badge-name">稳步前进</div>
+                    <div class="badge-progress">进度: 22/30 WPM</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 时长成就 -->
+        <div class="achievement-category">
+            <div class="category-header">
+                <div class="category-icon">⏱️</div>
+                <div class="category-info">
+                    <h3 class="category-title">时长成就</h3>
+                    <p class="category-desc">累计时长里程碑</p>
+                </div>
+                <div class="category-progress">
+                    <span class="progress-text">0/4</span>
+                </div>
+            </div>
+            <div class="badges-grid">
+                <div class="badge-item locked">
+                    <div class="achievement-badge TIME common locked" data-badge="time-1h">
+                        <div class="badge-core">
+                            <span class="badge-icon">1h</span>
+                        </div>
+                    </div>
+                    <div class="badge-name">初试锋芒</div>
+                    <div class="badge-progress">进度: 23min/1h</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 特殊成就 -->
+        <div class="achievement-category">
+            <div class="category-header">
+                <div class="category-icon">🌟</div>
+                <div class="category-info">
+                    <h3 class="category-title">特殊成就</h3>
+                    <p class="category-desc">独特行为奖励</p>
+                </div>
+                <div class="category-progress">
+                    <span class="progress-text">1/5</span>
+                </div>
+            </div>
+            <div class="badges-grid">
+                <div class="badge-item earned">
+                    <div class="achievement-badge SPECIAL uncommon" data-badge="night-owl">
+                        <div class="badge-core">
+                            <span class="badge-icon">🌙</span>
+                        </div>
+                    </div>
+                    <div class="badge-name">夜猫子</div>
+                    <div class="badge-date">2024.10.26</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 社交成就 -->
+        <div class="achievement-category">
+            <div class="category-header">
+                <div class="category-icon">👥</div>
+                <div class="category-info">
+                    <h3 class="category-title">社交成就</h3>
+                    <p class="category-desc">分享互动奖励</p>
+                </div>
+                <div class="category-progress">
+                    <span class="progress-text">0/2</span>
+                </div>
+            </div>
+            <div class="badges-grid">
+                <div class="badge-item locked">
+                    <div class="achievement-badge SOCIAL common locked" data-badge="first-share">
+                        <div class="badge-core">
+                            <span class="badge-icon">📤</span>
+                        </div>
+                    </div>
+                    <div class="badge-name">分享达人</div>
+                    <div class="badge-progress">首次分享解锁</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 节日成就 -->
+        <div class="achievement-category">
+            <div class="category-header">
+                <div class="category-icon">🎊</div>
+                <div class="category-info">
+                    <h3 class="category-title">节日成就</h3>
+                    <p class="category-desc">限时节日活动</p>
+                </div>
+                <div class="category-progress">
+                    <span class="progress-text">0/2</span>
+                </div>
+            </div>
+            <div class="badges-grid">
+                <div class="badge-item locked limited">
+                    <div class="achievement-badge SEASONAL limited locked" data-badge="new-year-2024">
+                        <div class="badge-core">
+                            <span class="badge-icon">🎊</span>
+                        </div>
+                    </div>
+                    <div class="badge-name">新年新气象</div>
+                    <div class="badge-progress">限时活动</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
