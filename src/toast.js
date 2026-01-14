@@ -2,14 +2,10 @@ import { onRecognitionStart, onRecognitionStop, getRecognitionState } from './re
 // 引入热键桥接模块，使本窗口也能收到 recognition:start/stop 事件
 import './hotkeys.js';
 
-const root = document.getElementById('toast-root');
-const indicator = document.getElementById('toast-indicator');
-const statusEl = document.getElementById('toast-status');
-const modeEl = document.getElementById('toast-mode');
-const textEl = document.getElementById('toast-text');
+console.log('[toast] initializing, __TAURI__=', !!globalThis.__TAURI__);
 
-let hideTimer = null;
-let lastFinalTs = null;
+const tauriEvent = globalThis.__TAURI__?.event;
+console.log('[toast] tauriEvent available:', !!tauriEvent);
 
 // 提示音：开始录音 & 最终完成
 let startSound = null;
@@ -41,115 +37,129 @@ function playFinalSound() {
     try { finalSound && finalSound.play && finalSound.play().catch(() => { }); } catch { }
 }
 
+// 控制 Tauri 窗口显示/隐藏
+async function showWindow() {
+    console.log('[toast] showWindow called');
+    if (!window.__TAURI__) {
+        console.error('[toast] window.__TAURI__ is undefined');
+        return;
+    }
+    if (!window.__TAURI__.window) {
+        console.error('[toast] window.__TAURI__.window is undefined');
+        return;
+    }
+    try {
+        const win = await window.__TAURI__.window.getCurrentWindow();
+        console.log('[toast] got window, calling show()');
+        await win.show();
+        await win.setAlwaysOnTop(true);
+        console.log('[toast] window shown');
+    } catch (e) {
+        console.error('[toast] showWindow error:', e);
+    }
+}
+
+async function hideWindow() {
+    console.log('[toast] hideWindow called');
+    if (!window.__TAURI__?.window?.getCurrentWindow) return;
+    try {
+        const win = await window.__TAURI__.window.getCurrentWindow();
+        await win.hide();
+        console.log('[toast] window hidden');
+    } catch (e) {
+        console.error('[toast] hideWindow error:', e);
+    }
+}
+
+// 等待 DOM 加载后再设置监听
+window.addEventListener('DOMContentLoaded', () => {
+    console.log('[toast] DOM loaded');
+
+    const root = document.getElementById('toast-root');
+    const indicator = document.getElementById('toast-indicator');
+    const statusEl = document.getElementById('toast-status');
+    const modeEl = document.getElementById('toast-mode');
+    const textEl = document.getElementById('toast-text');
+
+    console.log('[toast] elements found:', !!root, !!indicator, !!statusEl, !!modeEl, !!textEl);
+
+    if (!root || !indicator || !statusEl || !modeEl || !textEl) {
+        console.error('[toast] some elements not found!');
+        return;
+    }
+
+    // 初始状态：隐藏 toast
+    root.classList.remove('visible');
+
+    if (tauriEvent?.listen) {
+        console.log('[toast] setting up event listeners');
+
+        // 监听应用关闭事件，确保 toast 窗口关闭
+        tauriEvent.listen('tauri://close-requested', () => {
+            console.log('[toast] app close requested, hiding toast');
+            hideWindow();
+        });
+
+        // 监听 speech-event 事件，根据不同的事件类型更新 UI
+        tauriEvent.listen('speech-event', ev => {
+            console.log('[toast] speech-event received:', ev.payload);
+            const payload = ev.payload || {};
+            const eventType = payload.event;
+
+            if (eventType === 'recording' && payload.state === 'start') {
+                // 开始录音
+                console.log('[toast] handling recording start');
+                showToast();
+                indicator.classList.remove('recording', 'processing');
+                indicator.classList.add('recording');
+                statusEl.textContent = '正在录音…';
+                modeEl.textContent = '快捷键';
+            } else if (eventType === 'recording' && payload.state === 'stop') {
+                // 停止录音
+                console.log('[toast] handling recording stop');
+                showToast();
+                indicator.classList.remove('recording', 'processing');
+                indicator.classList.add('processing');
+                statusEl.textContent = '正在优化表达…';
+            } else if (eventType === 'final') {
+                // 完成优化
+                console.log('[toast] handling final');
+                showToast();
+                indicator.classList.remove('recording', 'processing');
+                indicator.classList.add('processing');
+                statusEl.textContent = '优化完成，已注入文本';
+                modeEl.textContent = '完成';
+                textEl.textContent = payload.processed || payload.raw || '';
+                textEl.classList.remove('empty');
+                playFinalSound();
+                // 1.5 秒后自动隐藏
+                setTimeout(() => {
+                    console.log('[toast] auto-hiding after final');
+                    root.classList.remove('visible');
+                    hideWindow();
+                }, 1500);
+            } else if (eventType === 'error') {
+                console.log('[toast] handling error');
+                showToast();
+                indicator.classList.remove('recording', 'processing');
+                statusEl.textContent = `出错：${payload.message || '未知错误'}`;
+                modeEl.textContent = '错误';
+                setTimeout(() => {
+                    root.classList.remove('visible');
+                    hideWindow();
+                }, 3200);
+            }
+        });
+
+        console.log('[toast] event listeners set up');
+    } else {
+        console.error('[toast] Tauri event API not available');
+    }
+});
+
 function showToast() {
+    console.log('[toast] showToast called');
     if (!root) return;
     root.classList.add('visible');
-}
-
-function hideToast() {
-    if (!root) return;
-    root.classList.remove('visible');
-}
-
-function setIndicator(state) {
-    if (!indicator) return;
-    indicator.classList.remove('recording', 'processing');
-    if (state === 'recording') indicator.classList.add('recording');
-    if (state === 'processing') indicator.classList.add('processing');
-}
-
-function setStatus(text) {
-    if (!statusEl) return;
-    statusEl.textContent = text;
-}
-
-function setMode(text) {
-    if (!modeEl) return;
-    modeEl.textContent = text || '';
-}
-
-function setTextPreview(text) {
-    if (!textEl) return;
-    if (text && text.trim()) {
-        textEl.textContent = text.trim();
-        textEl.classList.remove('empty');
-    } else {
-        textEl.textContent = '暂无文本';
-        textEl.classList.add('empty');
-    }
-}
-
-function scheduleAutoHide(delayMs = 2600) {
-    if (hideTimer) clearTimeout(hideTimer);
-    hideTimer = setTimeout(() => {
-        hideTimer = null;
-        hideToast();
-    }, delayMs);
-}
-
-// 初始化时根据当前状态做一次同步（例如应用重启时仍处于 active）
-(function initialSync() {
-    const state = getRecognitionState?.();
-    if (!state) return;
-    if (state.active) {
-        showToast();
-        setIndicator('recording');
-        setStatus('正在聆听…');
-        setMode(state.mode === 'backend' ? '快捷键 · 后台' : '手动');
-    }
-})();
-
-// 订阅识别开始/结束
-onRecognitionStart(state => {
-    if (hideTimer) {
-        clearTimeout(hideTimer);
-        hideTimer = null;
-    }
-    showToast();
-    setIndicator('recording');
-    setStatus('正在聆听…');
-    setMode(state.mode === 'backend' ? '快捷键 · 后台' : '手动');
-    playStartSound();
-});
-
-onRecognitionStop(state => {
-    // stop 之后可能还在等待最终结果，这里显示为“处理中”
-    setIndicator('processing');
-    setStatus('处理中…');
-    setMode(state.mode === 'backend' ? '快捷键 · 后台' : '手动');
-    // 不立即隐藏，等待 final 事件来收尾
-});
-
-// 监听 recognition.js 派发的最终结果事件
-if (typeof document !== 'undefined') {
-    document.addEventListener('recognition:final', e => {
-        const detail = e.detail || {};
-        lastFinalTs = detail.ts || Date.now();
-        showToast();
-        setIndicator('processing');
-        setStatus('已完成，正在注入文本…');
-        setMode('完成');
-        setTextPreview(detail.processed || detail.raw || '');
-        playFinalSound();
-        scheduleAutoHide(2800);
-    });
-
-    document.addEventListener('recognition:error', e => {
-        const detail = e.detail || {};
-        showToast();
-        setIndicator(null);
-        setStatus(`出错：${detail.message || '未知错误'}`);
-        setMode('错误');
-        scheduleAutoHide(3200);
-    });
-}
-
-// 调试辅助：在独立窗口中快速查看当前状态
-if (typeof window !== 'undefined') {
-    window.__monobuckToastDebug = {
-        showToast,
-        hideToast,
-        setStatus,
-        setTextPreview,
-    };
+    showWindow();
 }

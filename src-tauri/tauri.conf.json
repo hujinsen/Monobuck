@@ -28,10 +28,11 @@
         "decorations": false,
         "transparent": true,
         "alwaysOnTop": true,
-        "visible": true,
+        "visible": false,
         "focus": false,
+        "skipTaskbar": true,
         "url": "toast.html",
-        "devtools": false
+        "devtools": true
       }
     ],
     "security": {

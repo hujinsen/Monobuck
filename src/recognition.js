@@ -57,16 +57,23 @@ function internalStop(detail) {
 
 // 监听 hotkeys.js 转发的浏览器事件
 function attachDomBridge() {
-    document.addEventListener('recognition:start', e => internalStart(e.detail));
-    document.addEventListener('recognition:stop', e => internalStop(e.detail));
+    document.addEventListener('recognition:start', e => {
+        console.log('[recognition.js] DOM recognition:start event received', e.detail);
+        internalStart(e.detail);
+    });
+    document.addEventListener('recognition:stop', e => {
+        console.log('[recognition.js] DOM recognition:stop event received', e.detail);
+        internalStop(e.detail);
+    });
     // 监听后端的语音 sidecar 转发 (speech-event)
     const tauriEvent = globalThis.__TAURI__?.event;
+    console.log('[recognition.js] Tauri event API available:', !!tauriEvent?.listen);
     if (tauriEvent?.listen) {
         tauriEvent.listen('speech-event', ev => {
             const payload = ev.payload;
             if (!payload || typeof payload !== 'object') return;
             const eventType = payload.event;
-            console.debug('[speech-event]', eventType, payload); // 调试日志
+            console.log('[speech-event]', eventType, payload); // 调试日志
             if (eventType === 'recording' && payload.state === 'start') {
                 if (!state.active) internalStart({ trigger: 'backend', mode: 'backend' });
             } else if (eventType === 'recording' && payload.state === 'stop') {
@@ -91,6 +98,8 @@ function attachDomBridge() {
                 if (state.active) internalStop({ trigger: 'backend-error', mode: 'backend' });
             }
         });
+    } else {
+        console.error('[recognition.js] Tauri event API not available');
     }
 }
 attachDomBridge();

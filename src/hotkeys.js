@@ -9,18 +9,27 @@ function dispatch(name, detail) {
 }
 
 function setupBackendBridge() {
+    console.log('[hotkeys] setupBackendBridge called');
     const tauriEvent = globalThis.__TAURI__?.event;
+    console.log('[hotkeys] Tauri event API available:', !!tauriEvent?.listen);
     if (!tauriEvent?.listen) {
         console.warn('[hotkeys] 无法监听后端事件：TAURI event API 不存在');
         return;
     }
     tauriEvent.listen('recognition-event', ev => {
         const data = ev.payload;
+        console.log('[hotkeys] recognition-event received:', data);
         if (!data || typeof data !== 'object') return;
         const { type } = data;
         debug('backend recognition-event', data);
-        if (type === 'start') dispatch('recognition:start', data);
-        else if (type === 'stop') dispatch('recognition:stop', data);
+        if (type === 'start') {
+            console.log('[hotkeys] dispatching recognition:start');
+            dispatch('recognition:start', data);
+        }
+        else if (type === 'stop') {
+            console.log('[hotkeys] dispatching recognition:stop');
+            dispatch('recognition:stop', data);
+        }
         else if (type === 'error') console.error('[hotkeys] backend error', data);
     });
 }

@@ -3,6 +3,99 @@
 import './hotkeys.js';
 import { ws_connect, ws_send_text, ws_send_binary, ws_status, ws_listen } from './websocket.js';
 
+// ========== 调试日志捕获 ==========
+const DEBUG_PANEL_MAX_LOGS = 100;
+const debugLogs = [];
+let debugPanelInitialized = false;
+
+function addDebugLog(source, message, isError = false) {
+  const timestamp = new Date().toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  debugLogs.push({ timestamp, source, message, isError });
+
+  // 限制日志数量
+  if (debugLogs.length > DEBUG_PANEL_MAX_LOGS) {
+    debugLogs.shift();
+  }
+
+  // 如果面板可见，立即更新
+  updateDebugPanel();
+}
+
+function updateDebugPanel() {
+  const debugPanel = document.getElementById('debug-panel');
+  const debugLog = document.getElementById('debug-log');
+  if (!debugPanel || !debugLog) return;
+
+  debugLog.innerHTML = debugLogs.map(log => {
+    const timeClass = `log-time`;
+    const sourceClass = `log-source`;
+    const errorClass = log.isError ? 'log-error' : '';
+    return `<div class="log-entry ${errorClass}">
+      <span class="${timeClass}">[${log.timestamp}]</span>
+      <span class="${sourceClass}">${log.source}</span>
+      <span>${log.message}</span>
+    </div>`;
+  }).join('');
+}
+
+function initDebugPanel() {
+  if (debugPanelInitialized) return;
+  debugPanelInitialized = true;
+
+  const debugPanel = document.getElementById('debug-panel');
+  if (!debugPanel) return;
+
+  const toggleBtn = document.getElementById('debug-toggle');
+  const clearBtn = document.getElementById('debug-clear');
+
+  toggleBtn?.addEventListener('click', () => {
+    const logDiv = debugPanel.querySelector('.debug-log');
+    if (logDiv) {
+      if (logDiv.style.display === 'none') {
+        logDiv.style.display = 'block';
+        toggleBtn.textContent = '隐藏';
+      } else {
+        logDiv.style.display = 'none';
+        toggleBtn.textContent = '显示';
+      }
+    }
+  });
+
+  clearBtn?.addEventListener('click', () => {
+    debugLogs.length = 0;
+    updateDebugPanel();
+  });
+}
+
+// 覆盖 console 方法
+const originalConsole = {
+  log: console.log,
+  error: console.error,
+  warn: console.warn,
+  info: console.info,
+};
+
+console.log = (...args) => {
+  originalConsole.log(...args);
+  addDebugLog('LOG', args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' '));
+};
+
+console.error = (...args) => {
+  originalConsole.error(...args);
+  addDebugLog('ERROR', args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' '), true);
+};
+
+console.warn = (...args) => {
+  originalConsole.warn(...args);
+  addDebugLog('WARN', args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' '));
+};
+
+console.info = (...args) => {
+  originalConsole.info(...args);
+  addDebugLog('INFO', args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' '));
+};
+// ========== 调试日志捕获结束 ==========
+
 // 应用启动时，将上一次选择的麦克风偏好同步给 Rust 端，
 // 这样即便本次没有打开设置面板，录音也会优先使用该设备。
 if (typeof window !== 'undefined' && window.__TAURI__?.core?.invoke) {
@@ -168,6 +261,7 @@ window.addEventListener('DOMContentLoaded', initLivePanel);
 window.addEventListener('DOMContentLoaded', () => {
   initNav();
   enhanceButtons();
+  initDebugPanel();  // 初始化调试面板
   // 不再预创建设置模态，首次点击时才初始化
   // 监听后端实时统计更新事件
   const tauriEvent = window.__TAURI__?.event;

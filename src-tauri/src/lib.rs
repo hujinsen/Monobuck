@@ -1,7 +1,7 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 use std::sync::{Arc, Mutex};
 use tauri::path::BaseDirectory;
-use tauri::Emitter; // emit()
+use tauri::{Emitter, Manager}; // emit()
 // 在当前 Tauri 版本中，逻辑坐标和尺寸类型直接从 tauri 根命名空间导出
 use tauri::{LogicalPosition, LogicalSize};
 
@@ -453,6 +453,18 @@ pub fn run() {
                 if let Some(cmd_str) = cmd.get("cmd").and_then(|v| v.as_str()) {
                     match cmd_str {
                         "start" => {
+                            // 显示 toast 窗口并更新状态
+                            let toast_win = app_handle_for_cb.get_webview_window("toast");
+                            if let Some(toast_win) = toast_win {
+                                let _ = toast_win.show();
+                                let _ = toast_win.set_always_on_top(true);
+                                let _ = app_handle_for_cb.emit_to("toast", "toast-state-update", serde_json::json!({
+                                    "status": "正在录音…",
+                                    "indicator": "recording",
+                                    "mode": "快捷键"
+                                }));
+                            }
+
                             let audio_state = app_handle_for_cb.state::<AudioShared>().inner.clone();
                             let ws_state = app_handle_for_cb.state::<WsShared>().inner.clone();
                             let session_state = app_handle_for_cb.state::<SessionShared>().inner.clone();
@@ -472,6 +484,12 @@ pub fn run() {
                             }
                         }
                         "stop" => {
+                            // 更新 toast 状态为"正在优化表达"
+                            let _ = app_handle_for_cb.emit_to("toast", "toast-state-update", serde_json::json!({
+                                "status": "正在优化表达…",
+                                "indicator": "processing"
+                            }));
+
                             let audio_state = app_handle_for_cb.state::<AudioShared>().inner.clone();
                             let session_state = app_handle_for_cb.state::<SessionShared>().inner.clone();
                             if let Err(e) = stop_audio(audio_state, session_state) {
@@ -479,7 +497,7 @@ pub fn run() {
                                 let _ = app_handle_for_cb.emit("speech-event", serde_json::json!({"event":"error","stage":"stop-audio","error":e}));
                             } else {
                                 let _ = app_handle_for_cb.emit("speech-event", serde_json::json!({"event":"info","stage":"audio-stopped"}));
-                                // 录音停止（等待后端最终结果），供前端区分“录音中”和“处理中”
+                                // 录音停止（等待后端最终结果），供前端区分"录音中"和"处理中"
                                 let _ = app_handle_for_cb.emit(
                                     "speech-event",
                                     serde_json::json!({
