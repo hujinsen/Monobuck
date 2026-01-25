@@ -22,10 +22,13 @@
       {
         "label": "recording-status",
         "title": "录音状态",
-        "width": 100,
-        "height": 50,
+        "width": 150,
+        "height": 54,
         "url": "recording_status.html",
         "resizable": false,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
         "devtools": false,
         "visible": false
       }

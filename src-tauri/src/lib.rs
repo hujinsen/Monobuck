@@ -453,8 +453,17 @@ pub fn run() {
                             // 更新主窗口标题状态
                             update_window_title(&app_handle_for_cb, "recording");
 
-                            // 显示录音状态浮窗
+                            // 显示录音状态浮窗，并将其移动到主屏幕右侧靠上位置
                             if let Some(status_win) = app_handle_for_cb.get_webview_window("recording-status") {
+                                if let Ok(Some(monitor)) = status_win.current_monitor() {
+                                    let size = monitor.size();
+                                    // 距离屏幕右边 & 顶部各留出一点边距
+                                    let margin_right: i32 = 24;
+                                    let margin_top: i32 = 80;
+                                    let x = (size.width as i32).saturating_sub(150 + margin_right);
+                                    let y = margin_top.max(0);
+                                    let _ = status_win.set_position(tauri::PhysicalPosition::new(x, y));
+                                }
                                 let _ = status_win.show();
                             }
 
