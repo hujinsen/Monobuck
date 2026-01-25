@@ -24,8 +24,19 @@ const isTauri = () => typeof TAURI_INVOKE() === 'function';
 
 // ---- 通用工具 --------------------------------------------------------------
 async function tryInvoke(command, payload) {
-    if (!isTauri()) throw new Error('not-tauri');
+    if (!isTauri()) {
+        console.warn(`[Mock] invoke command "${command}"`, payload);
+        return;
+    }
     return await TAURI_INVOKE()(command, payload || {});
+}
+
+export async function setAppStatus(status) {
+    try {
+        await tryInvoke('set_app_status', { status });
+    } catch (e) {
+        console.warn('[API] set_app_status failed', e);
+    }
 }
 
 async function tryFetchJSON(url, opts) {

@@ -11,7 +11,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "monobuck 莫巴克",
+        "title": "Monobuck 莫巴克",
         "width": 1200,
         "height": 760,
         "resizable": true,
@@ -20,19 +20,14 @@
         "devtools": true
       },
       {
-        "label": "toast",
-        "title": "Monobuck Toast",
-        "width": 380,
-        "height": 160,
+        "label": "recording-status",
+        "title": "录音状态",
+        "width": 100,
+        "height": 50,
+        "url": "recording_status.html",
         "resizable": false,
-        "decorations": false,
-        "transparent": true,
-        "alwaysOnTop": true,
-        "visible": false,
-        "focus": false,
-        "skipTaskbar": true,
-        "url": "toast.html",
-        "devtools": true
+        "devtools": false,
+        "visible": false
       }
     ],
     "security": {

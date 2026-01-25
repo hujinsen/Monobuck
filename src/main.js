@@ -108,6 +108,30 @@ if (typeof window !== 'undefined' && window.__TAURI__?.core?.invoke) {
 // WebSocket 与识别面板生命周期整合：仅在 DOM 就绪后建立连接，允许状态显示 Connecting / Connected
 let _wsClientId = null;
 let _wsInitialized = false;
+
+// 增加重试机制的 WebSocket 连接函数
+async function wsConnectWithRetry(updateStatus, retries = 0, maxRetries = 30) {
+  try {
+    const clientId = await ws_connect();
+    console.log('[ws] connected clientId=', clientId);
+    updateStatus('Connected', 'connected');
+    return clientId;
+  } catch (err) {
+    console.warn(`[ws] connection attempt ${retries + 1} failed:`, err);
+
+    if (retries >= maxRetries) {
+      updateStatus('Connection Failed', 'error');
+      console.error('[ws] Max retries reached, server might be down.');
+      return null;
+    }
+
+    // 等待后重试 (首几次快一点，后面慢一点，比如: 500, 1000, 1500, 2000, 2000...)
+    const delay = Math.min(500 * (retries + 1), 2000);
+    await new Promise(r => setTimeout(r, delay));
+    return wsConnectWithRetry(updateStatus, retries + 1, maxRetries);
+  }
+}
+
 function initWebSocketBridge(panelRefs) {
   if (_wsInitialized) return; // 防重复
   _wsInitialized = true;
@@ -120,13 +144,16 @@ function initWebSocketBridge(panelRefs) {
 
   // 连接前标记 Connecting
   updateStatus('Connecting...', 'connecting');
-  ws_connect().then(clientId => {
+
+  // 使用重试机制建立连接
+  wsConnectWithRetry(updateStatus).then(clientId => {
+    if (!clientId) return; // 连接失败
+
     _wsClientId = clientId;
-    console.log('[ws] connected clientId=', clientId);
-    updateStatus('Connected', 'connected');
     // 仅监听生命周期事件；不发送任意文本到 ASR 端
     // 生命期事件监听
     ws_listen('ws-open', payload => {
+
       console.log('[ws-open]', payload);
       updateStatus('Connected', 'connected');
     });
@@ -188,7 +215,7 @@ function initWebSocketBridge(panelRefs) {
 
 // 可按需使用识别钩子：示例（懒得立即渲染 UI 可删除）
 import { onRecognitionStart, onRecognitionStop } from './recognition.js';
-import { getStats } from './api.js';
+import { getStats, setAppStatus } from './api.js';
 
 // 简单示例：控制台打印（后续可替换为真正录音逻辑）
 onRecognitionStart(e => console.log('[recognition start]', e));
@@ -230,6 +257,9 @@ function initLivePanel() {
   });
   // Final transcript event
   document.addEventListener('recognition:final', e => {
+    // 恢复原生窗口标题
+    setAppStatus('idle');
+
     const { raw, processed, durationMs } = e.detail || {};
     if (rawEl) rawEl.textContent = raw || '';
     if (processedEl) processedEl.textContent = processed || raw || '';
@@ -243,6 +273,9 @@ function initLivePanel() {
   });
   // Error event
   document.addEventListener('recognition:error', e => {
+    // 恢复原生窗口标题
+    setAppStatus('idle');
+
     const { message } = e.detail || {};
     if (statusEl) {
       statusEl.textContent = 'Error';

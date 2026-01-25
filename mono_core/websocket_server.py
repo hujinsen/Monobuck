@@ -419,135 +419,6 @@ async def handle_connection(websocket, path):
             manager.remove_connection(client_id)
             logger.info(f"客户端 {client_id} 会话结束")
 
-# 简单的HTTP服务器（用于健康检查）
-async def http_server_handler(reader, writer):
-    try:
-        # 读取请求
-        request = await reader.read(1024)
-        request_str = request.decode('utf-8')
-        
-        # 解析请求路径
-        path = request_str.split('\r\n')[0].split(' ')[1]
-        
-        # 健康检查端点
-        if path == '/health':
-            response = json.dumps({
-                "status": "ok",
-                "service": "audio-stream-server",
-                "timestamp": datetime.now().isoformat(),
-                "active_connections": len(manager.active_connections)
-            }).encode('utf-8')
-            
-            writer.write(b'HTTP/1.1 200 OK\r\n')
-            writer.write(b'Content-Type: application/json\r\n')
-            writer.write(b'Access-Control-Allow-Origin: *\r\n')
-            writer.write(f'Content-Length: {len(response)}\r\n'.encode('utf-8'))
-            writer.write(b'\r\n')
-            writer.write(response)
-            await writer.drain()
-        
-        # 状态信息端点
-        elif path == '/status':
-            try:
-                # 计算总存储使用量
-                total_storage = 0
-                file_count = 0
-                if os.path.exists(AUDIO_DIR):
-                    for filename in os.listdir(AUDIO_DIR):
-                        file_path = os.path.join(AUDIO_DIR, filename)
-                        if os.path.isfile(file_path):
-                            total_storage += os.path.getsize(file_path)
-                            file_count += 1
-                
-                response = json.dumps({
-                    "status": "ok",
-                    "timestamp": datetime.now().isoformat(),
-                    "active_connections": len(manager.active_connections),
-                    "audio_files_count": file_count,
-                    "total_storage_used": total_storage,
-                    "storage_directory": os.path.abspath(AUDIO_DIR),
-                    "server_version": "1.0.0"
-                }).encode('utf-8')
-                
-                writer.write(b'HTTP/1.1 200 OK\r\n')
-                writer.write(b'Content-Type: application/json\r\n')
-                writer.write(b'Access-Control-Allow-Origin: *\r\n')
-                writer.write(f'Content-Length: {len(response)}\r\n'.encode('utf-8'))
-                writer.write(b'\r\n')
-                writer.write(response)
-                await writer.drain()
-            except Exception as e:
-                logger.error(f"处理/status请求时出错: {str(e)}")
-                response = json.dumps({"status": "error", "message": "获取状态信息失败"}).encode('utf-8')
-                writer.write(b'HTTP/1.1 500 Internal Server Error\r\n')
-                writer.write(b'Content-Type: application/json\r\n')
-                writer.write(b'Access-Control-Allow-Origin: *\r\n')
-                writer.write(f'Content-Length: {len(response)}\r\n'.encode('utf-8'))
-                writer.write(b'\r\n')
-                writer.write(response)
-                await writer.drain()
-        
-        # 音频文件列表端点
-        elif path == '/audio-files':
-            try:
-                # 获取目录中的所有音频文件
-                files = []
-                if os.path.exists(AUDIO_DIR):
-                    for filename in os.listdir(AUDIO_DIR):
-                        file_path = os.path.join(AUDIO_DIR, filename)
-                        if os.path.isfile(file_path):
-                            file_stats = os.stat(file_path)
-                            files.append({
-                                "filename": filename,
-                                "size": file_stats.st_size,
-                                "created_at": datetime.fromtimestamp(file_stats.st_ctime).isoformat(),
-                                "modified_at": datetime.fromtimestamp(file_stats.st_mtime).isoformat()
-                            })
-                
-                # 按修改时间降序排序
-                files.sort(key=lambda x: x['modified_at'], reverse=True)
-                
-                response = json.dumps({
-                    "status": "ok",
-                    "files": files,
-                    "total": len(files)
-                }).encode('utf-8')
-                
-                writer.write(b'HTTP/1.1 200 OK\r\n')
-                writer.write(b'Content-Type: application/json\r\n')
-                writer.write(b'Access-Control-Allow-Origin: *\r\n')
-                writer.write(f'Content-Length: {len(response)}\r\n'.encode('utf-8'))
-                writer.write(b'\r\n')
-                writer.write(response)
-                await writer.drain()
-            except Exception as e:
-                logger.error(f"处理/audio-files请求时出错: {str(e)}")
-                response = json.dumps({"status": "error", "message": "获取文件列表失败"}).encode('utf-8')
-                writer.write(b'HTTP/1.1 500 Internal Server Error\r\n')
-                writer.write(b'Content-Type: application/json\r\n')
-                writer.write(b'Access-Control-Allow-Origin: *\r\n')
-                writer.write(f'Content-Length: {len(response)}\r\n'.encode('utf-8'))
-                writer.write(b'\r\n')
-                writer.write(response)
-                await writer.drain()
-        
-        # 其他路径返回404
-        else:
-            response = b'Not Found'
-            writer.write(b'HTTP/1.1 404 Not Found\r\n')
-            writer.write(b'Content-Type: text/plain\r\n')
-            writer.write(b'Access-Control-Allow-Origin: *\r\n')
-            writer.write(f'Content-Length: {len(response)}\r\n'.encode('utf-8'))
-            writer.write(b'\r\n')
-            writer.write(response)
-            await writer.drain()
-            
-    except Exception as e:
-        logger.error(f"HTTP服务器错误: {str(e)}")
-    finally:
-        writer.close()
-        await writer.wait_closed()
-
 # 启动服务器
 async def main():
     global asr, text_service
@@ -556,40 +427,23 @@ async def main():
     asr = ASRService()
     text_service = TextService()
 
-    # 启动WebSocket服务器
-    websocket_server = await websockets.serve(
-        handle_connection,
-        "0.0.0.0",
-        12000
-    )
-    
-    # # 启动HTTP服务器（用于健康检查）
-    # http_server = await asyncio.start_server(
-    #     http_server_handler,
-    #     "127.0.0.1",
-    #     8001
-    # )
-    
-    # logger.info("WebSocket服务器已启动，监听端口 8000")
-    # logger.info("HTTP健康检查服务器已启动，监听端口 8001")
-    # logger.info(f"音频文件保存目录: {os.path.abspath(AUDIO_DIR)}")
-    # logger.info("服务器正在运行...")
-    
-    # 仅运行WebSocket服务器
-    async with websocket_server:
-        await asyncio.gather(
-            websocket_server.serve_forever(),
-        )
+    # 启动 WebSocket 服务器
 
-    # 保持服务器运行
-    # async with websocket_server, http_server:
+    # websocket_server = await websockets.serve(
+    #     handle_connection,
+    #     "127.0.0.1",
+    #     12000,
+    # )
+    async with websockets.serve(handle_connection, 'localhost', 12000):
+        await asyncio.Future()  # 永久运行
+
+    # # 仅运行WebSocket服务器
+    # async with websocket_server:
     #     await asyncio.gather(
     #         websocket_server.serve_forever(),
-    #         # http_server.serve_forever()
     #     )
 
 if __name__ == "__main__":
-    # multiprocessing.freeze_support() # 已移至文件头部
     try:
         asyncio.run(main())
     except KeyboardInterrupt:

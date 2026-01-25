@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>录音状态 - MonoBuck</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-sans-cn, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+      background: rgba(0, 0, 0, 0.85);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    .recording-status-root {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.75);
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 8px 24px rgba(0, 0, 0, 0.6);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .recording-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ff3b30;
+      box-shadow: 0 0 8px rgba(255, 59, 48, 0.9);
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+
+    .recording-text-main {
+      font-weight: 600;
+    }
+
+    .recording-text-sub {
+      opacity: 0.75;
+      font-size: 12px;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+        box-shadow: 0 0 6px rgba(255, 59, 48, 0.7);
+      }
+
+      50% {
+        transform: scale(1.15);
+        box-shadow: 0 0 14px rgba(255, 59, 48, 1);
+      }
+
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 6px rgba(255, 59, 48, 0.7);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="recording-status-root" aria-live="polite" aria-label="正在录音">
+    <span class="recording-dot" aria-hidden="true"></span>
+    <div>
+      <div class="recording-text-main">正在录音...</div>
+      <div class="recording-text-sub">再次单击 Ctrl 结束</div>
+    </div>
+  </div>
+</body>
+
+</html>

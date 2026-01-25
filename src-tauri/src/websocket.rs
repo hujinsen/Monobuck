@@ -6,8 +6,8 @@ use crate::StatsShared;
 use futures::{SinkExt, StreamExt};
 use serde_json;
 use std::sync::{Arc, Mutex};
-use tauri::{AppHandle, Emitter, Manager};
 use tauri::State;
+use tauri::{AppHandle, Emitter, Manager};
 use tokio::sync::mpsc;
 use tokio::time::sleep;
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message, tungstenite::Bytes};
@@ -313,23 +313,7 @@ pub async fn ws_connect_internal(
                                                         }),
                                                     );
 
-                                                    // 更新 toast 状态为"优化完成"
-                                                    let _ = app_handle_for_read.emit_to("toast", "toast-state-update", serde_json::json!({
-                                                        "status": "优化完成，已注入文本",
-                                                        "indicator": "processing",
-                                                        "text": refined,
-                                                        "mode": "完成"
-                                                    }));
-
-                                                    // 1.5 秒后自动隐藏 toast 窗口
-                                                    let toast_win = app_handle_for_read.get_webview_window("toast");
-                                                    if let Some(toast_win) = toast_win {
-                                                        let toast_win_clone = toast_win.clone();
-                                                        tauri::async_runtime::spawn(async move {
-                                                            sleep(std::time::Duration::from_millis(1500)).await;
-                                                            let _ = toast_win_clone.hide();
-                                                        });
-                                                    }
+                                                    // 不再通过 HTML toast 窗口展示状态，改由原生标题栏和前端 UI 负责
                                                     println!(
                                                         "[stats] after apply: total_words={}, time_saved_seconds={}, wpm={}, today_words={}",
                                                         agg.total_words, agg.time_saved_seconds, agg.wpm, agg.today_words

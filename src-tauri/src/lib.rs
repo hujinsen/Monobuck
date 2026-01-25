@@ -111,6 +111,24 @@ fn get_stats(stats: tauri::State<'_, StatsShared>) -> Result<StatsAggregate, Str
     Ok(guard.clone())
 }
 
+/// 设置应用状态（用于更新标题栏等原生界面）
+#[tauri::command]
+fn set_app_status(status: String, app: tauri::AppHandle) {
+    update_window_title(&app, &status);
+}
+
+fn update_window_title(app: &tauri::AppHandle, status: &str) {
+    if let Some(win) = app.get_webview_window("main") {
+        let title = match status {
+            "recording" => "🔴 Monobuck - 正在录音...",
+            "processing" => "🟡 Monobuck - 正在优化表达...",
+            "idle" => "Monobuck",
+            _ => "Monobuck",
+        };
+        let _ = win.set_title(title);
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     use tauri::Manager;
@@ -120,30 +138,6 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
             let app_handle = app.handle().clone();
-
-            // 将 toast 窗口定位到主屏幕右侧中下位置
-            // 说明：这里使用主显示器尺寸计算一个相对坐标，而不是根据当前窗口默认位置。
-            if let Ok(Some(monitor)) = app_handle.primary_monitor() {
-                let screen_size = monitor.size(); // 物理像素
-                let scale_factor = monitor.scale_factor();
-                let logical_screen: LogicalSize<f64> = screen_size.to_logical(scale_factor);
-
-                // 与 tauri.conf.json 中的窗口大小保持一致
-                let win_w = 380.0_f64;
-                let win_h = 160.0_f64;
-                let margin_x = 24.0_f64;
-                // 垂直位置取屏幕高度的 65% 附近
-                let center_ratio = 0.65_f64;
-
-                let x = logical_screen.width - win_w - margin_x;
-                let center_y = logical_screen.height * center_ratio;
-                let y = center_y - win_h / 2.0;
-
-                if let Some(toast_win) = app_handle.get_webview_window("toast") {
-                    let _ = toast_win.set_size(LogicalSize::new(win_w, win_h));
-                    let _ = toast_win.set_position(LogicalPosition::new(x.max(0.0), y.max(0.0)));
-                }
-            }
 
             // 初始化热键状态
             let hotkey_state = Arc::new(Mutex::new(create_default_hotkey_state()));
@@ -331,6 +325,9 @@ pub fn run() {
                         }
                         // 兜底：再按进程名尝试结束可能残留的 websocket_server.exe
                         kill_websocket_sidecar_best_effort();
+                        
+                        // 显式退出应用，解决 toast 窗口残留导致进程不退出的问题
+                        app_handle_for_close.exit(0);
                         }
                     });
                 }
@@ -453,16 +450,12 @@ pub fn run() {
                 if let Some(cmd_str) = cmd.get("cmd").and_then(|v| v.as_str()) {
                     match cmd_str {
                         "start" => {
-                            // 显示 toast 窗口并更新状态
-                            let toast_win = app_handle_for_cb.get_webview_window("toast");
-                            if let Some(toast_win) = toast_win {
-                                let _ = toast_win.show();
-                                let _ = toast_win.set_always_on_top(true);
-                                let _ = app_handle_for_cb.emit_to("toast", "toast-state-update", serde_json::json!({
-                                    "status": "正在录音…",
-                                    "indicator": "recording",
-                                    "mode": "快捷键"
-                                }));
+                            // 更新主窗口标题状态
+                            update_window_title(&app_handle_for_cb, "recording");
+
+                            // 显示录音状态浮窗
+                            if let Some(status_win) = app_handle_for_cb.get_webview_window("recording-status") {
+                                let _ = status_win.show();
                             }
 
                             let audio_state = app_handle_for_cb.state::<AudioShared>().inner.clone();
@@ -471,6 +464,7 @@ pub fn run() {
                             if let Err(e) = start_audio(audio_state, ws_state, session_state) {
                                 eprintln!("启动音频失败: {e}");
                                 let _ = app_handle_for_cb.emit("speech-event", serde_json::json!({"event":"error","stage":"start-audio","error":e}));
+                                update_window_title(&app_handle_for_cb, "idle");
                             } else {
                                 let _ = app_handle_for_cb.emit("speech-event", serde_json::json!({"event":"info","stage":"audio-started"}));
                                 // 录音真正开始时通知前端，驱动 recognition.js 中的 recording/start 流程
@@ -484,11 +478,8 @@ pub fn run() {
                             }
                         }
                         "stop" => {
-                            // 更新 toast 状态为"正在优化表达"
-                            let _ = app_handle_for_cb.emit_to("toast", "toast-state-update", serde_json::json!({
-                                "status": "正在优化表达…",
-                                "indicator": "processing"
-                            }));
+                            // 更新状态为"正在优化表达"
+                            update_window_title(&app_handle_for_cb, "processing");
 
                             let audio_state = app_handle_for_cb.state::<AudioShared>().inner.clone();
                             let session_state = app_handle_for_cb.state::<SessionShared>().inner.clone();
@@ -513,6 +504,10 @@ pub fn run() {
                                     "command": "stop_recording"
                                 }).to_string();
                                 let _ = websocket::ws_send_text_internal(&ws_state.inner, &msg);
+                                // 隐藏录音状态浮窗
+                                if let Some(status_win) = app_handle_for_cb.get_webview_window("recording-status") {
+                                    let _ = status_win.hide();
+                                }
                             }
                         }
                         _ => {}
@@ -537,10 +532,10 @@ pub fn run() {
             ws_send_binary,
             ws_disconnect,
             ws_status,
-            inject_text_unicode
-            ,
+            inject_text_unicode,
             set_mic_preference,
-            get_input_devices
+            get_input_devices,
+            set_app_status
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
