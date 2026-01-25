@@ -217,9 +217,19 @@ function initWebSocketBridge(panelRefs) {
 import { onRecognitionStart, onRecognitionStop } from './recognition.js';
 import { getStats, setAppStatus } from './api.js';
 
-// 简单示例：控制台打印（后续可替换为真正录音逻辑）
-onRecognitionStart(e => console.log('[recognition start]', e));
-onRecognitionStop(e => console.log('[recognition stop]', e));
+// 录音开始/结束提示音（assets/sound/start_rec.wav & stop_rec.wav）
+const startSound = new Audio('assets/sound/start_rec.wav');
+const stopSound = new Audio('assets/sound/stop_rec.wav');
+
+// 简单示例：控制台打印 + 播放提示音
+onRecognitionStart(e => {
+  console.log('[recognition start]', e);
+  try { startSound.currentTime = 0; startSound.play().catch(() => { }); } catch { }
+});
+onRecognitionStop(e => {
+  console.log('[recognition stop]', e);
+  try { stopSound.currentTime = 0; stopSound.play().catch(() => { }); } catch { }
+});
 
 // Live recognition panel updates
 function initLivePanel() {
