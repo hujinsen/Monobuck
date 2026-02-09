@@ -31,8 +31,8 @@
 
 ## 功能演示
 两种操作方式：1、按下ctrl+win键开始录音，松开结束；2、双击ctrl键开始录音，再次单击ctrl键结束录音。
-[![演示视频](docs/demo-cover.png)](https://www.bilibili.com/video/BV1ZicuzkEYX/)
 
+https://github.com/user-attachments/assets/abfacdaf-51ce-4c54-9da5-f29755435b10
 
 ## 如何使用
 要运行代码，首先得配置python环境，推荐使用uv进行环境管理：
