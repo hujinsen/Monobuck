@@ -427,21 +427,10 @@ async def main():
     asr = ASRService()
     text_service = TextService()
 
-    # 启动 WebSocket 服务器
 
-    # websocket_server = await websockets.serve(
-    #     handle_connection,
-    #     "127.0.0.1",
-    #     12000,
-    # )
     async with websockets.serve(handle_connection, 'localhost', 12000):
         await asyncio.Future()  # 永久运行
 
-    # # 仅运行WebSocket服务器
-    # async with websocket_server:
-    #     await asyncio.gather(
-    #         websocket_server.serve_forever(),
-    #     )
 
 if __name__ == "__main__":
     try:

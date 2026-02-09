@@ -2206,7 +2206,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "monobuck2"
+name = "monobuck"
 version = "0.1.0"
 dependencies = [
  "base64 0.22.1",
