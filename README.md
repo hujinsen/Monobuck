@@ -31,9 +31,7 @@
 
 ## 功能演示
 两种操作方式：1、按下ctrl+win键开始录音，松开结束；2、双击ctrl键开始录音，再次单击ctrl键结束录音。
-<video src="docs/demo.mp4" controls width="640">
-  您的浏览器不支持 video 标签。
-</video>
+[![演示视频](docs/demo-cover.png)](https://www.bilibili.com/video/BV1ZicuzkEYX/)
 
 
 ## 如何使用
