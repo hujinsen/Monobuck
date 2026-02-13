@@ -1,8 +1,10 @@
 # Monobuck2 使用与开发指南
 
 > Windows / 跨平台语音输入助手：按下快捷键开始说话，自动语音转文字，并通过大模型润色后直接注入到光标位置。
-https://github.com/user-attachments/assets/abfacdaf-51ce-4c54-9da5-f29755435b10
+
 ---
+
+https://github.com/user-attachments/assets/abfacdaf-51ce-4c54-9da5-f29755435b10
 
 ## 1. 项目简介
 
