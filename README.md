@@ -289,5 +289,3 @@ npm run tauri build
   - 可使用 VS Code 的 Live Server / 任意静态服务器直接打开 `src/` 目录，但部分依赖 Tauri API 的功能会不可用。
 - 若要扩展本地 ASR / 本地 LLM：
   - 在 `asr_service.py` 与 `text_service.py` 中已有 `Local*Strategy` 占位，可以在不依赖远程服务的前提下实现完整链路。
-
-如需我进一步补充英文版 README 或拆分为「用户使用手册」+「开发文档」两份文件，也可以继续说明。
