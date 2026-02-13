@@ -8,7 +8,7 @@ https://github.com/user-attachments/assets/abfacdaf-51ce-4c54-9da5-f29755435b10
 
 ## 1. 项目简介
 
-Monobuck2 是一个受 macOS 应用 Monologue 启发的跨平台语音输入工具：
+Monobuck2 是一个跨平台语音输入工具：
 
 - 按下快捷键（如 Ctrl + Win 或双击 Ctrl），即可开始录音；
 - 后端实时进行语音识别（ASR），将语音转为文本；
