@@ -1,88 +1,91 @@
-# Monobuck2 使用与开发指南
+[中文](README_CN.md)
+# Monobuck2 Usage & Development Guide
 
-> Windows / 跨平台语音输入助手：按下快捷键开始说话，自动语音转文字，并通过大模型润色后直接注入到光标位置。
+> A cross-platform voice input assistant for Windows: press a global shortcut to start speaking, get real-time speech-to-text, then auto-refine the text with an LLM and inject it into the current cursor position.
 
 ---
 
 https://github.com/user-attachments/assets/abfacdaf-51ce-4c54-9da5-f29755435b10
 
-## 1. 项目简介
+## 1. Overview
 
-Monobuck2 是一个跨平台语音输入工具：
+Monobuck2 is inspired by the macOS app Monologue and aims to bring a similar, polished voice input experience to Windows (and potentially other platforms).
 
-- 按下快捷键（如 Ctrl + Win 或双击 Ctrl），即可开始录音；
-- 后端实时进行语音识别（ASR），将语音转为文本；
-- 文本再交给大模型进行“规范化/润色”，输出直接可用的高质量文本；
-- 最终结果自动回填到当前光标位置（任何编辑器/输入框中）。
+Typical flow:
 
-项目采用前后端分离 + Tauri 框架：
+- You press a global shortcut (e.g., `Ctrl + Win` or double-press `Ctrl`) to start recording.
+- The backend performs real-time ASR (speech recognition) to convert your speech into text.
+- The raw ASR text is sent to an LLM for formatting and refinement so that the result is directly usable with minimal edits.
+- The refined text is injected back into the current focused input field (editor, browser, IM, etc.).
 
-- **前端 UI**：HTML/CSS/JavaScript（在 `src/` 中），负责界面、统计面板和勋章系统等；
-- **Python 后端**：在 `mono_core/` 中，通过 WebSocket 提供本地/远程 ASR 与文本润色服务；
-- **Tauri/Rust 中间层**：在 `src-tauri/` 中，负责：
-  - 全局快捷键监听（Ctrl+Win / 双击 Ctrl 等）；
-  - 调用系统麦克风并推音频流给 Python WebSocket 服务；
-  - 维护本地 session 记录（`records/`）和统计数据；
-  - 打包为桌面应用（Windows 为主，亦可扩展 macOS/Linux）。
+Architecture at a glance:
 
-架构示意图见：`docs/Screenshot_20260209221338.png`。
+- **Frontend UI** (in `src/`): Plain HTML/CSS/JavaScript, responsible for the dashboard, stats, achievements view, and in-app interactions.
+- **Python backend** (in `mono_core/`): Provides local/remote ASR and text refinement services over WebSocket.
+- **Tauri/Rust bridge** (in `src-tauri/`):
+  - Listens to system-wide hotkeys.
+  - Captures microphone audio and streams it to the Python WebSocket server.
+  - Manages session persistence under `records/`.
+  - Packages everything into a desktop app (primarily for Windows, extendable to macOS/Linux).
 
----
-
-## 2. 仓库结构概览
-
-- `mono_core/`：Python 后端核心
-  - `websocket_server.py`：WebSocket 音频服务入口（打包为 `websocket_server.exe`）。
-  - `core/`：后端具体逻辑
-    - `asr_service.py`：ASR 服务封装（远程 Fun-ASR 实时识别为主，预留本地模型策略）。
-    - `text_service.py`：文本服务封装，调用通义千问等模型进行润色（Refine）。
-    - `config.json` / `config.py`：后端配置读取与管理（API Key、ASR 参数等）。
-    - 其他：模型管理、Runtime、工具函数等。
-  - `RealtimeSTT/`：实时语音流处理相关模块（VAD、录音、状态机等）。
-  - `examples/`：Python 侧独立示例脚本。
-  - `tests/`：ASR 策略切换、会话持久化等后端测试。
-- `src/`：前端 Web 资源
-  - `index.html`：主窗口页面结构。
-  - `main.js`：前端主逻辑（导航、统计展示、与 Tauri 事件交互等）。
-  - `hotkeys.js`：将 Rust 后端发出的 `recognition-event` 转换为前端 `CustomEvent`（start/stop）。
-  - `recognition.js`：封装前端识别生命周期事件（开始/结束/错误等）。
-  - `websocket.js`：通过 Tauri 命令连接 Python WebSocket（`ws://localhost:12000/ws/audio/{clientId}`）。
-  - `api.js`：通过 Tauri 命令或本地文件访问统计、会话记录等。
-  - `assets/`：图标、字体、提示音等静态资源。
-  - `views/`：Dashboard / 转录列表 / 使用说明 / 设置等 HTML 片段。
-- `src-tauri/`：Tauri（Rust）层
-  - `tauri.conf.json`：Tauri 配置（窗口、bundler、资源列表等）。
-    - `bundle.resources` 中包含 `resources/websocket_server.exe`，与 Python 打包结果对应。
-  - `src/`：Rust 端代码（全局快捷键、音频采集、WebSocket 代理、session 记录等）。
-  - `resources/`：打包时一并带入的资源（包括 `websocket_server.exe`）。
-- `docs/`：设计与实现文档
-  - `DESIGN_GUIDE.md`：前端 UI/交互/配色设计指南（Starbucks 风格深绿 + 玻璃拟物）。
-  - `ASR_WORKFLOW.md`：ASR + Refine 的详细流程说明（生产者-消费者模型、队列设计）。
-  - `ACHIEVEMENTS.md`：勋章系统与激励机制设计方案。
-- `packages/achievements/`：前端勋章系统的独立 JS 包（设计草稿/组件封装）。
-- `records/`：运行时生成的 session / 音频等记录（主要由 Rust 端维护）。
+See the architecture diagram in `docs/Screenshot_20260209221338.png`.
 
 ---
 
-## 3. 运行与开发环境
+## 2. Repository Structure
 
-### 3.1 系统要求
+- `mono_core/` – Python backend core
+  - `websocket_server.py`: WebSocket audio service entry (later bundled as `websocket_server.exe`).
+  - `core/`:
+    - `asr_service.py`: ASR service wrapper (currently remote Fun-ASR realtime; local strategy placeholder included).
+    - `text_service.py`: Text service wrapper, calling DashScope LLMs (e.g., Qwen) for refinement.
+    - `config.json` / `config.py`: Configuration loading utilities (API keys, ASR parameters, feature flags, etc.).
+    - Other helpers: runtime, models, utilities.
+  - `RealtimeSTT/`: Realtime speech pipeline modules (VAD, recorder, state machine, etc.).
+  - `examples/`: Standalone Python demos.
+  - `tests/`: Backend test cases (ASR strategy switching, stream/session persistence, etc.).
+- `src/` – Frontend web assets
+  - `index.html`: Main window markup.
+  - `main.js`: Main frontend logic (navigation, dashboard, stats updates, Tauri event handling, etc.).
+  - `hotkeys.js`: Bridges Rust-side recognition events to frontend `CustomEvent`s (`recognition:start/stop`).
+  - `recognition.js`: Normalized recognition lifecycle hooks (start/stop/error, etc.).
+  - `websocket.js`: Uses Tauri commands to connect to the Python WebSocket server (`ws://localhost:12000/ws/audio/{clientId}`).
+  - `api.js`: Talks to Tauri/Rust to fetch stats and transcripts from local storage.
+  - `assets/`: Icons, fonts, sounds, etc.
+  - `views/`: HTML fragments for dashboard, transcripts, instructions, settings, etc.
+- `src-tauri/` – Tauri (Rust) layer
+  - `tauri.conf.json`: App configuration (windows, bundle, resources).
+    - `bundle.resources` includes `resources/websocket_server.exe` built from Python.
+  - `src/`: Rust code handling global shortcuts, audio capture, WebSocket proxying, session persistence, etc.
+  - `resources/`: Extra resources packaged with the app (including `websocket_server.exe`).
+- `docs/` – Design and workflow docs
+  - `DESIGN_GUIDE.md`: Detailed UI design guide (colors, typography, components, layout).
+  - `ASR_WORKFLOW.md`: ASR + refine pipeline design (producer/consumer queues, session boundaries, race-condition handling).
+  - `ACHIEVEMENTS.md`: Achievements / badges system and reward mechanics.
+- `packages/achievements/`: JS package draft for the achievements UI and logic.
+- `records/`: Runtime-generated sessions and audio-related data (mainly orchestrated by the Rust side).
 
-- 操作系统：Windows 10 及以上（主要开发与测试平台），理论上可扩展至 macOS / Linux。
-- Node.js：建议 >= 18。
-- Rust：Tauri 2 需要稳定版 Rust 工具链（`rustup` 安装即可）。
-- Python：>= 3.10（推荐使用 `uv` 管理虚拟环境）。
+---
 
-### 3.2 Python 后端依赖
+## 3. Environment & Dependencies
 
-Python 侧依赖在 `mono_core/pyproject.toml` 中声明，主要包括：
+### 3.1 Requirements
 
-- ASR 相关：`funasr`、`funasr-onnx`、`webrtcvad-wheels`、`silero-vad`、`sounddevice`、`pyaudio` 等；
-- LLM 相关：`dashscope`（用于通义系列模型调用）；
-- Web 层：`websockets`、`fastapi`、`uvicorn`（部分模块使用）；
-- 其他：`numpy`、`torch`、`jieba`、`psutil`、`pyinstaller` 等。
+- **OS**: Windows 10 or later (primary target). Other platforms are possible with Tauri.
+- **Node.js**: Recommended >= 18.
+- **Rust**: Stable toolchain via `rustup` (required by Tauri 2).
+- **Python**: >= 3.10 (strongly recommended to manage via `uv`).
 
-建议通过 `uv` 在 `mono_core/` 目录下管理环境：
+### 3.2 Python Backend Dependencies
+
+Python dependencies are defined in `mono_core/pyproject.toml`, including:
+
+- ASR: `funasr`, `funasr-onnx`, `webrtcvad-wheels`, `silero-vad`, `sounddevice`, `pyaudio`, etc.
+- LLM: `dashscope` (for Aliyun DashScope / Qwen models).
+- Web: `websockets`, `fastapi`, `uvicorn`, `python-multipart` (some used by submodules).
+- Others: `numpy`, `torch`, `jieba`, `psutil`, `pyinstaller`, and more.
+
+Use `uv` in `mono_core/` to create and sync the environment:
 
 ```bash
 cd mono_core
@@ -90,15 +93,15 @@ uv init .
 uv sync
 ```
 
-完成后即可使用虚拟环境内的 Python 运行/打包后端服务。
+After this, use the virtualenv Python for running and bundling the backend.
 
 ---
 
-## 4. 快速开始（开发模式）
+## 4. Getting Started (Development)
 
-### 步骤 1：准备 Python 后端
+### Step 1 – Set up the Python backend
 
-1. 进入后端目录并创建环境（如上所示）：
+1. Create and sync the environment (as above):
 
    ```bash
    cd mono_core
@@ -106,70 +109,70 @@ uv sync
    uv sync
    ```
 
-2. 配置 `mono_core/core/config.json`：
+2. Configure `mono_core/core/config.json`:
 
-   - 配置阿里云 DashScope 的 `DASHSCOPE_API_KEY`（用于远程 ASR 与 LLM，视实际使用而定）；
-   - 根据需要配置 `ASR_SAMPLE_RATE`、`ASR_FORMAT`、`USE_REMOTE_LLM` 等；
-   - 可以参考代码中的 `get_config_value` 调用查看需要的键。
+   - Set `DASHSCOPE_API_KEY` for Aliyun DashScope (both ASR and LLM, depending on your setup).
+   - Optionally tune `ASR_SAMPLE_RATE`, `ASR_FORMAT`, `USE_REMOTE_LLM`, etc.
+   - Check where `get_config_value` is used in code to see which keys are expected.
 
-3. 直接运行 Python WebSocket 服务（开发时可以不打包）：
+3. Run the WebSocket server in development mode (no bundling required):
 
    ```bash
    cd mono_core
    python websocket_server.py
    ```
 
-   默认监听：`ws://localhost:12000/ws/audio/{client_id}`，端口为 `12000`。
+   Default address: `ws://localhost:12000/ws/audio/{client_id}`.
 
-### 步骤 2：准备 Node/Tauri 前端
+### Step 2 – Set up the Node/Tauri frontend
 
-1. 在仓库根目录安装依赖：
+1. Install Node dependencies at repo root:
 
    ```bash
-   cd ..  # 回到仓库根目录 MonoBuck2
+   cd ..  # back to repo root
    npm install
    ```
 
-   `package.json` 中只包含 Tauri CLI 及其插件依赖：
+   `package.json` mainly includes:
 
-   - `@tauri-apps/cli`：Tauri 2 命令行工具；
-   - `@tauri-apps/plugin-global-shortcut`：全局快捷键插件。
+   - `@tauri-apps/cli`: Tauri 2 CLI.
+   - `@tauri-apps/plugin-global-shortcut`: global shortcut plugin.
 
-2. 开发模式启动 Tauri：
+2. Start Tauri dev mode:
 
    ```bash
    npm run tauri dev
    ```
 
-   这会：
+   This will:
 
-   - 启动 Tauri dev 进程，打开主窗口（`src/index.html`）；
-   - 由 Rust 端负责：捕获快捷键、创建录音窗口、与 Python WebSocket 建立连接等。
+   - Start the Tauri dev process and open the main window (`src/index.html`).
+   - Let the Rust side handle global shortcuts, recording status window, and the bridge to Python WebSocket.
 
-> 开发时你可以：
-> - 单独运行 Python（`python mono_core/websocket_server.py`），观察日志；
-> - 使用浏览器 DevTools 调试前端 UI（Tauri dev 模式下可启用）。
+> For development:
+> - You can run `python mono_core/websocket_server.py` separately and watch backend logs.
+> - You can use Tauri devtools to debug the frontend.
 
 ---
 
-## 5. 打包发布
+## 5. Building for Distribution
 
-### 5.1 打包 Python WebSocket 服务
+### 5.1 Bundle the Python WebSocket server
 
-进入 `mono_core/`，使用已有脚本打包：
+Inside `mono_core/`, use the provided script:
 
 ```bash
 cd mono_core
 python build_websocket_server.py
 ```
 
-脚本会调用 PyInstaller，生成独立的 `websocket_server.exe`。
+This uses PyInstaller to produce a standalone `websocket_server.exe`.
 
-生成物会被复制到：
+The output is copied to:
 
 - `src-tauri/resources/websocket_server.exe`
 
-Tauri 配置 `src-tauri/tauri.conf.json` 中的：
+Tauri config `src-tauri/tauri.conf.json` contains:
 
 ```json
 "bundle": {
@@ -179,113 +182,115 @@ Tauri 配置 `src-tauri/tauri.conf.json` 中的：
 }
 ```
 
-会在最终安装包中携带该可执行文件，运行时由 Rust 端拉起。
+So the executable is packaged with the final app and launched by the Rust side when needed.
 
-### 5.2 打包 Tauri 应用
+### 5.2 Build the Tauri app
 
-在仓库根目录执行：
+From the repository root:
 
 ```bash
 npm run tauri build
 ```
 
-- Tauri 会使用 `src-tauri/tauri.conf.json` 中的配置打包应用；
-- 产物默认位于：`src-tauri/target/release/`（不同平台文件名略有差异）。
+- Tauri will build the desktop app according to `src-tauri/tauri.conf.json`.
+- Artifacts are typically in `src-tauri/target/release/`.
 
-> 注意：打包前应确保 `src-tauri/resources/websocket_server.exe` 存在，否则应用内无法进行语音识别。
-
----
-
-## 6. 功能与交互概览
-
-### 6.1 快捷键与录音流程
-
-- Rust 端监听系统层快捷键（例如：
-  - Ctrl + Win 按住说话，松开结束；
-  - 双击 Ctrl 开始，再按一次停止；
-  - 具体组合以实际实现为准）。
-- 监听到开始事件后：
-  - 展示/更新录音状态小窗（由 `recording_status.html` 渲染）；
-  - 通过 Tauri 命令推送音频流到 Python WebSocket 服务；
-  - 向前端广播 `recognition:start`。
-- 停止录音：
-  - 推送停止指令到 Python（在 WebSocket 文本消息中发送 `stop_recording` 命令）；
-  - Python 侧按 `docs/ASR_WORKFLOW.md` 中描述的队列机制，完成 ASR 和 Refine；
-  - 最终通过 Tauri 事件把 `final_result` 返回给前端，并注入当前光标位置。
-
-### 6.2 ASR + Refine 细节
-
-在 `mono_core/websocket_server.py` 中：
-
-- `ConnectionManager` 维护每个客户端连接的：
-  - WebSocket 实例；
-  - 音频缓冲与队列；
-  - 停止事件等。
-- 每个连接对应一个 ASR worker 线程：
-  - 从 `audio_queue` 读取音频帧，调用 `ASRService.transcribe_stream`；
-  - 将中间/最终识别结果放入 `result_queue`；
-  - 在会话结束时插入 `{"status": "session_end"}` 消息。
-- 异步 `asr_consumer` 协程：
-  - 持续从 `result_queue` 读取识别结果；
-  - 将 `is_final=True` 的文本拼接到 `session_text_list`；
-  - 收到 `session_end` 时再一次性调用 `TextService.refine(raw_text)`，返回 `final_result`。
-
-更多细节可以参考：`docs/ASR_WORKFLOW.md`。
-
-### 6.3 前端 UI 与勋章系统
-
-- Dashboard：展示使用统计、热力日历、最近转录等。
-- 转录列表：按 session 展示历史记录（从 `records/sessions/*.json` 读取）。
-- 勋章系统：
-  - 设计文档在 `docs/ACHIEVEMENTS.md`；
-  - 具体 JS 草案在 `packages/achievements/`。
-- UI 设计语言：深绿色 + 玻璃拟物 + 金色点缀（详见 `docs/DESIGN_GUIDE.md`）。
+> Important: ensure `src-tauri/resources/websocket_server.exe` exists before building; otherwise, ASR will not work in the packaged app.
 
 ---
 
-## 7. 配置与常见问题
+## 6. Features & Interaction Model
 
-### 7.1 配置项
+### 6.1 Global hotkeys & recording lifecycle
 
-主要配置位于 Python 端 `mono_core/core/config.json`，典型项包括：
+- Rust side listens to platform-specific global shortcuts, for example:
+  - Press-and-hold `Ctrl + Win` to record, release to stop; or
+  - Double-tap `Ctrl` to start, tap again to stop.
+- On recording start:
+  - A small recording status window (`recording_status.html`) is shown/updated.
+  - Microphone audio is streamed to the Python WebSocket server.
+  - A `recognition:start` custom event is dispatched to the frontend (`hotkeys.js`).
+- On recording stop:
+  - A `stop_recording` command is sent via WebSocket text message on the Python side.
+  - The backend finishes ASR and refinement according to the queue-based workflow.
+  - The final result is returned via a Tauri event, and the Rust side injects the refined text into the current cursor position.
 
-- `DASHSCOPE_API_KEY`：阿里云 DashScope API Key；
-- `ASR_SAMPLE_RATE`：采样率，默认 16000；
-- `ASR_FORMAT`：音频格式（如 `pcm`）；
-- `USE_REMOTE_LLM`：是否启用远程大模型（否则走本地 mock）。
+### 6.2 ASR + refine workflow
 
-修改配置后，重启 Python WebSocket 服务即可生效。
+Within `mono_core/websocket_server.py`:
 
-### 7.2 日志与排错
+- `ConnectionManager` keeps per-client state:
+  - WebSocket connection.
+  - Audio buffer and queue.
+  - Stop event.
+- An ASR worker thread per connection:
+  - Consumes from the audio queue and passes data to `ASRService.transcribe_stream`.
+  - Emits incremental recognition results into a `result_queue`.
+  - At the end of a session, pushes a sentinel `{"status": "session_end"}` into `result_queue`.
+- An async `asr_consumer` task:
+  - Reads from `result_queue`.
+  - Appends only `is_final=true` texts to `session_text_list`.
+  - When it receives `session_end`, it joins all collected texts into `raw_text`, calls `TextService.refine(raw_text)`, and sends a `final_result` message to the client.
 
-- Python 端：
-  - `mono_core/websocket_server.py` 启动时会把日志输出到：
-    - 临时目录下的 `monobuck_audio_service.log`；
-    - 控制台标准输出。
-- Tauri/Rust 端：
-  - 运行时日志可在 Tauri 控制台中查看；
-- 前端：
-  - `src/main.js` 中接管了 `console.log/error`，面板 `#debug-panel` 中可查看最近日志。
+This design is thoroughly documented in `docs/ASR_WORKFLOW.md`. It avoids race conditions by treating the session end as a first-class event in the data stream.
 
-常见问题排查思路：
+### 6.3 Frontend UI & achievements
 
-1. 无法连接 WebSocket：
-   - 确认 Python 服务是否已启动，端口 12000 是否被占用；
-   - 查看后端日志中是否有导入 Fun-ASR / DashScope 失败等异常。
-2. 有识别但没有润色：
-   - 检查 `USE_REMOTE_LLM` 配置；
-   - 检查 `DASHSCOPE_API_KEY` 是否有效。
-3. Tauri 启动后无响应：
-   - 使用 `npm run tauri dev` 并打开 DevTools 查看前端报错；
-   - 检查 `resources/websocket_server.exe` 是否存在并可执行。
+- **Dashboard**:
+  - Shows usage statistics, calendar heatmap, recent transcripts, etc.
+- **Transcripts view**:
+  - Lists historical sessions (backed by JSON files under `records/sessions/`).
+- **Achievements system**:
+  - Designed in `docs/ACHIEVEMENTS.md` and prototyped under `packages/achievements/`.
+  - Multiple dimensions (usage count, duration, words, streak, special holidays, etc.).
+- **UI design language**:
+  - Dark, deep-green theme with glassmorphism and golden accents, described in `docs/DESIGN_GUIDE.md`.
 
 ---
 
-## 8. 面向开发者的建议
+## 7. Configuration & Troubleshooting
 
-- 若只想调试 ASR：
-  - 可以在 `mono_core/examples/` 中添加独立脚本，直接调用 `ASRService.transcribe_file` 或 `transcribe_stream`。
-- 若只想调试前端 UI：
-  - 可使用 VS Code 的 Live Server / 任意静态服务器直接打开 `src/` 目录，但部分依赖 Tauri API 的功能会不可用。
-- 若要扩展本地 ASR / 本地 LLM：
-  - 在 `asr_service.py` 与 `text_service.py` 中已有 `Local*Strategy` 占位，可以在不依赖远程服务的前提下实现完整链路。
+### 7.1 Key config options
+
+Main configuration lives in `mono_core/core/config.json` (read via `get_config_value`):
+
+- `DASHSCOPE_API_KEY`: Aliyun DashScope API key.
+- `ASR_SAMPLE_RATE`: Sample rate (default 16000).
+- `ASR_FORMAT`: Audio format (e.g., `pcm`).
+- `USE_REMOTE_LLM`: Whether to call remote LLM (otherwise a local mock strategy is used).
+
+Restart the Python WebSocket server after changing config values.
+
+### 7.2 Logs & debugging
+
+- **Python backend**:
+  - `mono_core/websocket_server.py` logs to:
+    - A temp file `monobuck_audio_service.log` under the OS temp directory.
+    - Standard output.
+- **Tauri/Rust**:
+  - Logs appear in the Tauri dev console / terminal.
+- **Frontend**:
+  - `src/main.js` overrides `console.log/error/...` and writes to the on-screen debug panel (`#debug-panel`).
+
+Common issues:
+
+1. **Cannot connect to WebSocket**:
+   - Check that the Python server is running and port 12000 is free.
+   - Look at backend logs for import errors (Fun-ASR, DashScope, etc.).
+2. **ASR works but no refinement**:
+   - Verify `USE_REMOTE_LLM` and `DASHSCOPE_API_KEY`.
+3. **Tauri app starts but UI is broken or unresponsive**:
+   - Run `npm run tauri dev` and open devtools to inspect frontend errors.
+   - Confirm that `resources/websocket_server.exe` is present and executable.
+
+---
+
+## 8. Developer Notes & Extension Ideas
+
+- **ASR-only experiments**:
+  - Use `ASRService.transcribe_file` or `transcribe_stream` directly from small scripts under `mono_core/examples/`.
+- **Frontend-only prototyping**:
+  - Serve the `src/` directory using a static server (e.g., VS Code Live Server). Some features that depend on Tauri APIs will be disabled or require mocks.
+- **Local ASR / local LLM**:
+  - `asr_service.py` and `text_service.py` already contain local strategy placeholders (`LocalASRStrategy`, `LocalLLMStrategy`).
+  - You can plug in your own models and keep the same WebSocket & UI contracts.
